@@ -1,0 +1,7 @@
+# Visual Studio archivos temporales
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.vsidx
