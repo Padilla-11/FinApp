@@ -162,7 +162,7 @@ public class SimuladorService : ISimuladorService
                 case "costo_producto":
                     // Ajuste en % de costo vendido
                     if (v.ValorActual > 0)
-                        costoVendPct *= (double)(v.ValorSimulado / v.ValorActual);
+                        costoVendPct *= (v.ValorSimulado / v.ValorActual);
                     break;
                 case "volumen_ventas":
                     // Cambio directo de ingresos
