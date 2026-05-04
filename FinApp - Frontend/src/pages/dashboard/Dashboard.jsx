@@ -1,0 +1,191 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
+import { cierresApi } from '../../api/cierres';
+import { jornadasApi } from '../../api/jornadas';
+import { cuentasApi } from '../../api/otros';
+import { KpiCard, Alert, EstadoBadge } from '../../components/ui/index';
+import { fmt, fmtPct, fmtFechaCorta, fmtHora } from '../../utils/format';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+
+export default function Dashboard() {
+  const { negocio } = useApp();
+  const navigate = useNavigate();
+  const [historial, setHistorial]   = useState([]);
+  const [jornada, setJornada]       = useState(null);
+  const [cuentas, setCuentas]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+
+  const nid = negocio?.Id || negocio?.id;
+
+  useEffect(() => {
+    if (!nid) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const [hRes, jRes, cRes] = await Promise.allSettled([
+          cierresApi.historial(nid, 1, 30),
+          jornadasApi.obtenerActiva(nid),
+          cuentasApi.listar(nid),
+        ]);
+        if (hRes.status === 'fulfilled') setHistorial(hRes.value.data.Data?.Items || []);
+        if (jRes.status === 'fulfilled') setJornada(jRes.value.data.Data);
+        if (cRes.status === 'fulfilled') setCuentas(cRes.value.data.Data || []);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [nid]);
+
+  // Calcular KPIs del mes
+  const mesActual = historial.filter((c) => {
+    const d = new Date(c.CreadoEn || c.creadoEn);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+
+  const totalIngresos  = mesActual.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
+  const totalUtilidad  = mesActual.reduce((s, c) => s + (c.UtilidadNeta || 0), 0);
+  const margenProm     = mesActual.length ? mesActual.reduce((s, c) => s + (c.MargenGanancia || 0), 0) / mesActual.length : 0;
+  const diasRentables  = mesActual.filter((c) => c.EstadoDia === 'rentable').length;
+
+  const totalCobrar = cuentas.filter((c) => ['pendiente','cobrado_parcial'].includes(c.Estado || c.estado))
+    .reduce((s, c) => s + ((c.MontoTotal || 0) - (c.MontoCobrado || 0)), 0);
+
+  // Datos para gráfica
+  const chartData = historial.slice(0, 14).reverse().map((c) => ({
+    fecha: fmtFechaCorta(c.CreadoEn || c.creadoEn),
+    Ingresos: c.IngresosOperativos || 0,
+    Gastos: (c.GastosJornada || 0) + (c.CostosFijosDia || 0) + (c.CostoVendido || 0),
+  }));
+
+  const alertas = [];
+  if (jornada) alertas.push({ type: 'warning', icon: '🟡', title: 'Jornada abierta', text: `Tienes una jornada abierta desde las ${fmtHora(jornada.AbiertaEn || jornada.abiertaEn)}` });
+  if (totalCobrar > 0) alertas.push({ type: 'info', icon: 'ℹ️', title: 'Cuentas por cobrar', text: `Tienes ${fmt(totalCobrar)} pendientes de cobro.`, link: '/cuentas' });
+  const racha = mesActual.slice(-3);
+  if (racha.length >= 2 && racha.every((c) => c.EstadoDia === 'perdida')) alertas.push({ type: 'danger', icon: '🔴', title: 'Racha negativa', text: 'Llevas varios días consecutivos sin superar el punto de equilibrio.' });
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+      <div style={{ textAlign: 'center', color: 'var(--fo-text-muted)' }}>Cargando dashboard...</div>
+    </div>
+  );
+
+  return (
+    <>
+      <div className="fo-topbar">
+        <div>
+          <h1 className="fo-page-title">Dashboard</h1>
+          <p className="fo-page-sub">{negocio?.Nombre || negocio?.nombre} · {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        </div>
+        <button className="btn btn-accent" onClick={() => navigate('/jornada')}>
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          {jornada ? 'Ver jornada activa' : 'Abrir jornada'}
+        </button>
+      </div>
+
+      {/* Status bar */}
+      <div className={`status-bar ${jornada ? 'open' : 'closed'}`}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.625rem' }}>
+          <span className="status-dot" />
+          {jornada
+            ? <span>Jornada activa · abierta a las <strong>{fmtHora(jornada.AbiertaEn || jornada.abiertaEn)}</strong></span>
+            : <span>Sin jornada activa</span>
+          }
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={() => navigate('/jornada')}>
+          {jornada ? 'Ver jornada →' : 'Abrir jornada'}
+        </button>
+      </div>
+
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        <KpiCard label="Ingresos del mes" value={fmt(totalIngresos)} sub={`${mesActual.length} jornadas`} />
+        <KpiCard label="Utilidad neta" value={fmt(totalUtilidad)} type="accent" sub={`Margen: ${fmtPct(margenProm)}`} style={{ '--fo-kpi-val': 'var(--fo-accent-dark)' }} />
+        <KpiCard label="Días rentables" value={`${diasRentables} / ${mesActual.length}`} sub="Este mes" />
+        <KpiCard label="Cuentas por cobrar" value={fmt(totalCobrar)} type="warning" sub={`${cuentas.filter(c => ['pendiente','cobrado_parcial'].includes(c.Estado||c.estado)).length} clientes`} />
+      </div>
+
+      {/* Gráfica + Alertas */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+        <div className="fo-card">
+          <div className="fo-card-header">
+            <div>
+              <div className="fo-card-title">Ingresos vs Gastos</div>
+              <div className="fo-card-subtitle">Últimos 14 cierres</div>
+            </div>
+            <span className="badge badge-info">{new Date().toLocaleString('es-CO', { month: 'long', year: 'numeric' })}</span>
+          </div>
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="gIngresos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#3A5068" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#3A5068" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="gGastos" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#E05252" stopOpacity={0.12}/>
+                    <stop offset="95%" stopColor="#E05252" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--fo-border-light)" />
+                <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: 'var(--fo-text-muted)' }} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--fo-text-muted)' }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}K`} />
+                <Tooltip formatter={(v, n) => [fmt(v), n]} labelStyle={{ fontWeight: 600 }} />
+                <Area type="monotone" dataKey="Ingresos" stroke="#3A5068" fill="url(#gIngresos)" strokeWidth={2} />
+                <Area type="monotone" dataKey="Gastos"   stroke="#E05252" fill="url(#gGastos)"   strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="fo-empty"><div className="fo-empty-icon">📊</div><div className="fo-empty-text">Aún no hay datos para mostrar</div></div>
+          )}
+        </div>
+
+        <div className="fo-card">
+          <div className="fo-card-header">
+            <div className="fo-card-title">Alertas activas</div>
+            {alertas.length > 0 && <span className="badge badge-danger">{alertas.length}</span>}
+          </div>
+          {alertas.length === 0 ? (
+            <div className="fo-empty"><div className="fo-empty-icon">✅</div><div className="fo-empty-text">Sin alertas activas</div></div>
+          ) : (
+            alertas.map((a, i) => (
+              <Alert key={i} type={a.type} icon={a.icon} title={a.title}>
+                {a.text} {a.link && <a href={a.link} style={{ fontWeight: 500, marginLeft: '.375rem' }}>Ver →</a>}
+              </Alert>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Últimas jornadas */}
+      <div className="fo-card">
+        <div className="fo-card-header">
+          <div className="fo-card-title">Últimas jornadas</div>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate('/historial')}>Ver todo →</button>
+        </div>
+        {historial.length === 0 ? (
+          <div className="fo-empty"><div className="fo-empty-icon">📅</div><div className="fo-empty-text">Aún no hay jornadas cerradas</div></div>
+        ) : (
+          <div className="fo-table-wrap" style={{ border: 'none', boxShadow: 'none' }}>
+            <table className="fo-table">
+              <thead><tr><th>Fecha</th><th>Ingresos</th><th>Utilidad neta</th><th>Margen</th><th>Estado</th></tr></thead>
+              <tbody>
+                {historial.slice(0, 5).map((c, i) => (
+                  <tr key={i} style={{ cursor: 'pointer' }} onClick={() => navigate('/historial')}>
+                    <td>{fmtFechaCorta(c.CreadoEn || c.creadoEn)}</td>
+                    <td className="amount">{fmt(c.IngresosOperativos)}</td>
+                    <td className={`amount ${(c.UtilidadNeta || 0) >= 0 ? 'pos' : 'neg'}`}>{fmt(c.UtilidadNeta)}</td>
+                    <td className="mono">{fmtPct(c.MargenGanancia)}</td>
+                    <td><EstadoBadge estado={c.EstadoDia} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
