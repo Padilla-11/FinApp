@@ -143,6 +143,8 @@ export default function Cierre() {
                         <td className="mono">{fmt(p.CostoUnitario)}</td>
                         <td style={{ textAlign: 'center' }}>
                           <input type="number" min="0" value={uds}
+                            onFocus={(e) => { if (uds === 0) e.target.value = ''; }}
+                            onBlur={(e) => { if (e.target.value === '') { setConteos((prev) => ({ ...prev, [pid]: 0 })); } }}
                             onChange={(e) => setConteos((prev) => ({ ...prev, [pid]: Math.max(0, parseInt(e.target.value) || 0) }))}
                             style={{ width: 90, textAlign: 'center', padding: '.375rem .5rem', border: '1.5px solid var(--fo-border)', borderRadius: 8, fontFamily: 'var(--fo-font-mono)', fontSize: '.875rem' }} />
                         </td>
@@ -185,7 +187,7 @@ export default function Cierre() {
             <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.75rem' }}>Cuenta el efectivo físico antes de cerrar</div>
             <div style={{ display: 'flex', alignItems: 'center', border: '2px solid var(--fo-border)', borderRadius: 12, maxWidth: 300, margin: '0 auto', overflow: 'hidden' }}>
               <div style={{ padding: '1rem 1.125rem', background: 'var(--fo-surface)', fontSize: '1.2rem', fontWeight: 600, color: 'var(--fo-primary)', borderRight: '2px solid var(--fo-border)' }}>$</div>
-              <input type="number" placeholder="0" min="0" value={cajaFinal} onChange={(e) => setCajaFinal(e.target.value)}
+              <input type="text" inputMode="decimal" placeholder="0" min="0" value={cajaFinal} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setCajaFinal(v); }}
                 style={{ flex: 1, border: 'none', outline: 'none', fontSize: '1.5rem', fontFamily: 'var(--fo-font-mono)', textAlign: 'right', padding: '1rem', background: 'transparent' }} />
             </div>
             <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '.375rem' }}>

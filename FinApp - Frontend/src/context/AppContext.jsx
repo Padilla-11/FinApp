@@ -13,6 +13,7 @@ export function AppProvider({ children }) {
     try { return JSON.parse(localStorage.getItem('finop_negocio')); } catch { return null; }
   });
   const [negocios, setNegocios] = useState([]);
+  const [rol, setRol] = useState(null);
   const [loading, setLoading]   = useState(false);
 
   const isAuth = !!token;
@@ -45,11 +46,13 @@ export function AppProvider({ children }) {
     setUser(null);
     setNegocio(null);
     setNegocios([]);
+    setRol(null);
   }
 
   function seleccionarNegocio(neg) {
     localStorage.setItem('finop_negocio', JSON.stringify(neg));
     setNegocio(neg);
+    setRol(neg.Rol || neg.rol || null);
   }
 
   async function cargarNegocios() {
@@ -59,7 +62,13 @@ export function AppProvider({ children }) {
       const lista = res.data.Data || [];
       setNegocios(lista);
       // Auto-seleccionar si solo hay uno o no hay seleccionado
-      if (!negocio && lista.length > 0) seleccionarNegocio(lista[0]);
+      if (!negocio && lista.length > 0) {
+        seleccionarNegocio(lista[0]);
+      } else if (lista.length > 0 && negocio) {
+        // Mantener el rol del negocio activo sincronizado
+        const actual = lista.find(n => (n.Id || n.id) === (negocio.Id || negocio.id));
+        if (actual) setRol(actual.Rol || actual.rol || null);
+      }
       return lista;
     } finally {
       setLoading(false);
@@ -73,7 +82,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       user, token, isAuth,
-      negocio, negocios,
+      negocio, negocios, rol,
       loading,
       login, registrar, logout,
       seleccionarNegocio, cargarNegocios,

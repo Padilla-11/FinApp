@@ -15,11 +15,19 @@ const NAV = [
 ];
 
 export default function Sidebar() {
-  const { user, negocio, logout } = useApp();
+  const { user, negocio, rol, logout } = useApp();
   const navigate = useNavigate();
 
-  const initials = (name = '') =>
-    name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
+  const initials = (name = '') => {
+    const clean = name.trim();
+    if (!clean) return '?';
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return clean.slice(0, 2).toUpperCase();
+  };
+
+  const userName = user?.Nombre || user?.nombre || '';
+  const userRole = rol || 'propietario';
 
   function handleLogout() {
     logout();
@@ -66,10 +74,10 @@ export default function Sidebar() {
           </div>
         )}
         <div className="fo-user-chip">
-          <div className="fo-avatar">{initials(user?.Nombre || user?.nombre || 'U')}</div>
+          <div className="fo-avatar">{initials(userName)}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="fo-user-name">{user?.Nombre || user?.nombre}</div>
-            <div className="fo-user-role">{user?.Correo || user?.correo}</div>
+            <div className="fo-user-name">{userName}</div>
+            <div className="fo-user-role">{userRole}</div>
           </div>
           <button
             onClick={handleLogout}
