@@ -57,7 +57,13 @@ public class AuthService : IAuthService
             Nombre = u.Nombre,
             Correo = u.Correo,
             UsuarioId = u.Id,
-            Expira = DateTimeOffset.UtcNow.AddMinutes(expMin)
+            Expira = DateTimeOffset.UtcNow.AddMinutes(expMin),
+            Usuario = new Models.DTOs.Auth.UsuarioDto
+            {
+                Id = u.Id,
+                Nombre = u.Nombre,
+                Correo = u.Correo
+            }
         };
     }
 }

@@ -27,6 +27,13 @@ public class LoginRequest
     public string Contrasena { get; set; } = null!;
 }
 
+public class UsuarioDto
+{
+    public long Id { get; set; }
+    public string Nombre { get; set; } = null!;
+    public string Correo { get; set; } = null!;
+}
+
 public class AuthResponse
 {
     public string Token { get; set; } = null!;
@@ -34,4 +41,5 @@ public class AuthResponse
     public string Correo { get; set; } = null!;
     public long UsuarioId { get; set; }
     public DateTimeOffset Expira { get; set; }
+    public UsuarioDto Usuario { get; set; } = null!;
 }
