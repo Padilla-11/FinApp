@@ -55,16 +55,14 @@ export default function Cierre() {
     })();
   }, [nid]);
 
-  // Calcular caja esperada
+// Calcular caja esperada
   const cajaIni = jornada?.CajaInicial || 0;
-  const cajaEsperada = movimientos.reduce((s, m) => s + (m.AfectaCaja ? (m.Monto || 0) * (m.SignoCaja || 1) : 0), cajaIni);
-  const diferencia = parseFloat(cajaFinal || 0) - cajaEsperada;
 
   // Calcular margen promedio de todos los productos registrados
   const averageMargenPorcentaje = productos.length > 0
     ? productos.reduce((sum, p) => sum + (p.MargenPorcentaje || 0), 0) / productos.length
     : 20; // 20% por defecto si no hay productos
-  const averageMargenRatio = averageMargenPorcentaje / 100; // Convertir a decimal (0.20)
+  const averageMargenRatio = averageMargenPorcentaje / 100;
 
   // Determinar si hay conteo (si se ingresaron unidades > 0)
   const hayConteo = Object.values(conteos).some(v => v > 0);
@@ -74,6 +72,22 @@ export default function Cierre() {
     const p = productos.find((x) => (x.Id || x.id) === parseInt(id));
     return s + (p ? (p.PrecioVenta || 0) * uds : 0);
   }, 0);
+
+  // Separar ingresos y gastos de movimientos
+  const ingresosFromMovimientos = movimientos
+    .filter(m => m.AfectaCaja && m.SignoCaja === 1)
+    .reduce((s, m) => s + (m.Monto || 0), 0);
+
+  const gastosFromMovimientos = movimientos
+    .filter(m => m.AfectaCaja && m.SignoCaja === -1)
+    .reduce((s, m) => s + (m.Monto || 0), 0);
+
+  // Calcular caja esperada: incluir ingresos del conteo cuando hayConteo
+  const cajaEsperada = hayConteo
+    ? cajaIni + totalConteoIngresos - gastosFromMovimientos
+    : cajaIni + ingresosFromMovimientos - gastosFromMovimientos;
+
+  const diferencia = parseFloat(cajaFinal || 0) - cajaEsperada;
 
   // Calcular ingresos totales (con o sin conteo)
   const ingresosOperativos = hayConteo
@@ -260,11 +274,28 @@ export default function Cierre() {
                <input type="text" inputMode="decimal" placeholder="0" value={cajaFinal} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setCajaFinal(v); }}
                 style={{ flex: 1, border: 'none', outline: 'none', fontSize: '1.5rem', fontFamily: 'var(--fo-font-mono)', textAlign: 'right', padding: '1rem', background: 'transparent' }} />
             </div>
-            <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '.375rem' }}>
-              <div style={{ fontSize: '.775rem', color: 'var(--fo-text-muted)' }}>Caja inicial: <strong>{fmt(cajaIni)}</strong></div>
-              <div style={{ fontSize: '.775rem', color: 'var(--fo-text-muted)' }}>Caja esperada: <strong style={{ color: 'var(--fo-primary)' }}>{fmt(cajaEsperada)}</strong></div>
-              <div style={{ fontSize: '.775rem', color: 'var(--fo-text-secondary)', lineHeight: 1.5, marginTop: '.5rem' }}>
-                La caja esperada se calcula a partir de tu caja inicial más todas las transacciones registradas hoy.
+            <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+              <div style={{ fontSize: '.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fo-text-muted)', marginBottom: '.25rem' }}>Desglose de caja esperada</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', fontSize: '.8125rem', background: 'var(--fo-surface)', padding: '.75rem', borderRadius: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--fo-text-secondary)' }}>Caja inicial:</span>
+                  <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500 }}>{fmt(cajaIni)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--fo-text-secondary)' }}>
+                    {hayConteo ? 'Ventas del conteo:' : 'Ingresos del día:'}
+                  </span>
+                  <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-accent-dark)' }}>+{fmt(hayConteo ? totalConteoIngresos : ingresosFromMovimientos)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--fo-text-secondary)' }}>Gastos del día:</span>
+                  <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-danger)' }}>-{fmt(gastosFromMovimientos)}</span>
+                </div>
+                <div style={{ height: '1px', background: 'var(--fo-border)', margin: '.375rem 0' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                  <span>Caja esperada:</span>
+                  <span style={{ fontFamily: 'var(--fo-font-mono)', color: 'var(--fo-primary)' }}>{fmt(cajaEsperada)}</span>
+                </div>
               </div>
             </div>
           </div>
