@@ -89,12 +89,10 @@ export default function Cierre() {
 
   const diferencia = parseFloat(cajaFinal || 0) - cajaEsperada;
 
-  // Calcular ingresos totales (con o sin conteo)
+  // Calcular ingresos operativos (con o sin conteo)
   const ingresosOperativos = hayConteo
     ? totalConteoIngresos 
-    : movimientos
-        .filter((m) => m.SignoCaja === 1 && m.AfectaCaja)
-        .reduce((s, m) => s + (m.Monto || 0), 0);
+    : parseFloat(cajaFinal || 0) - cajaIni + gastosFromMovimientos;  // Formula: cajaFinal - cajaInicial + gastos
 
   // Costo de lo vendido: 80% simplificado si no hay conteo, actual si hay conteo
   const totalConteoCosto = Object.entries(conteos).reduce((s, [id, uds]) => {
@@ -154,11 +152,20 @@ export default function Cierre() {
         .filter(([, uds]) => uds > 0)
         .map(([id, uds]) => ({ ProductoId: parseInt(id), UnidadesVendidas: uds }));
 
-      await cierresApi.confirmar(nid, jid, {
+      // Construir request data
+      const requestData = {
         CajaFinalRegistrada: parseFloat(cajaFinal),
         ConteoRealizado: conteoRealizado,
         Conteos: conteoRealizado ? conteosArr : [],
-      });
+      };
+
+      // Cuando NO hay conteo, enviar los ingresos y gastos calculados desde el frontend
+      if (!conteoRealizado) {
+        requestData.IngresosOperativosCalculados = ingresosOperativos;
+        requestData.GastosJornadaCalculados = gastosJornada;
+      }
+
+      await cierresApi.confirmar(nid, jid, requestData);
       toast.success('¡Jornada cerrada correctamente!');
       navigate('/historial');
     } catch (err) {
@@ -275,28 +282,51 @@ export default function Cierre() {
                 style={{ flex: 1, border: 'none', outline: 'none', fontSize: '1.5rem', fontFamily: 'var(--fo-font-mono)', textAlign: 'right', padding: '1rem', background: 'transparent' }} />
             </div>
             <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-              <div style={{ fontSize: '.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fo-text-muted)', marginBottom: '.25rem' }}>Desglose de caja esperada</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', fontSize: '.8125rem', background: 'var(--fo-surface)', padding: '.75rem', borderRadius: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--fo-text-secondary)' }}>Caja inicial:</span>
-                  <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500 }}>{fmt(cajaIni)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--fo-text-secondary)' }}>
-                    {hayConteo ? 'Ventas del conteo:' : 'Ingresos del día:'}
-                  </span>
-                  <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-accent-dark)' }}>+{fmt(hayConteo ? totalConteoIngresos : ingresosFromMovimientos)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--fo-text-secondary)' }}>Gastos del día:</span>
-                  <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-danger)' }}>-{fmt(gastosFromMovimientos)}</span>
-                </div>
-                <div style={{ height: '1px', background: 'var(--fo-border)', margin: '.375rem 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                  <span>Caja esperada:</span>
-                  <span style={{ fontFamily: 'var(--fo-font-mono)', color: 'var(--fo-primary)' }}>{fmt(cajaEsperada)}</span>
-                </div>
-              </div>
+              {hayConteo ? (
+                // Mostrar desglose completo cuando hay conteo
+                <>
+                  <div style={{ fontSize: '.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fo-text-muted)', marginBottom: '.25rem' }}>Desglose de caja esperada</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', fontSize: '.8125rem', background: 'var(--fo-surface)', padding: '.75rem', borderRadius: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--fo-text-secondary)' }}>Caja inicial:</span>
+                      <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500 }}>{fmt(cajaIni)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--fo-text-secondary)' }}>Ventas del conteo:</span>
+                      <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-accent-dark)' }}>+{fmt(totalConteoIngresos)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--fo-text-secondary)' }}>Gastos del día:</span>
+                      <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-danger)' }}>-{fmt(gastosFromMovimientos)}</span>
+                    </div>
+                    <div style={{ height: '1px', background: 'var(--fo-border)', margin: '.375rem 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                      <span>Caja esperada:</span>
+                      <span style={{ fontFamily: 'var(--fo-font-mono)', color: 'var(--fo-primary)' }}>{fmt(cajaEsperada)}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                // Mostrar desglose simplificado cuando NO hay conteo (caja esperada N/A)
+                <>
+                  <div style={{ fontSize: '.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fo-text-muted)', marginBottom: '.25rem' }}>Resumen de caja</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', fontSize: '.8125rem', background: 'var(--fo-surface)', padding: '.75rem', borderRadius: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--fo-text-secondary)' }}>Caja inicial:</span>
+                      <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500 }}>{fmt(cajaIni)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--fo-text-secondary)' }}>Gastos del día:</span>
+                      <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-danger)' }}>-{fmt(gastosFromMovimientos)}</span>
+                    </div>
+                    <div style={{ height: '1px', background: 'var(--fo-border)', margin: '.375rem 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                      <span>Caja esperada:</span>
+                      <span style={{ fontFamily: 'var(--fo-font-mono)', color: 'var(--fo-text-muted)' }}>N/A</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -304,6 +334,8 @@ export default function Cierre() {
 
       {/* PASO 3: Validación */}
       {paso === 3 && (
+        hayConteo ? (
+        // MOSTRAR VALIDACIÓN NORMAL CUANDO HAY CONTEO
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div className="fo-card" style={{ maxWidth: 680, width: '100%' }}>
             <div className="fo-card-header">
@@ -319,12 +351,14 @@ export default function Cierre() {
                 <div style={{ height: 1, background: 'var(--fo-border)', margin: '.625rem 0' }} />
                 <div style={{ fontSize: '.8125rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '.3rem 0' }}><span style={{ color: 'var(--fo-text-secondary)' }}>Inicial</span><span style={{ fontFamily: 'var(--fo-font-mono)' }}>{fmt(cajaIni)}</span></div>
-                  {movimientos.filter((m) => m.AfectaCaja).slice(0, 5).map((m, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '.3rem 0', borderTop: '1px solid var(--fo-border-light)' }}>
-                      <span style={{ color: 'var(--fo-text-secondary)', fontSize: '.775rem', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.Descripcion || m.descripcion}</span>
-                      <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: (m.SignoCaja || 0) > 0 ? 'var(--fo-accent-dark)' : 'var(--fo-danger)' }}>{(m.SignoCaja || 0) > 0 ? '+' : '-'}{fmt(m.Monto || 0)}</span>
-                    </div>
-                  ))}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '.3rem 0', borderTop: '1px solid var(--fo-border-light)' }}>
+                    <span style={{ color: 'var(--fo-text-secondary)', fontSize: '.775rem' }}>Ventas del conteo</span>
+                    <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-accent-dark)' }}>+{fmt(totalConteoIngresos)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '.3rem 0', borderTop: '1px solid var(--fo-border-light)' }}>
+                    <span style={{ color: 'var(--fo-text-secondary)', fontSize: '.775rem' }}>Gastos</span>
+                    <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-danger)' }}>-{fmt(gastosFromMovimientos)}</span>
+                  </div>
                 </div>
               </div>
               <div>
@@ -346,6 +380,38 @@ export default function Cierre() {
             </div>
           </div>
         </div>
+        ) : (
+        // MOSTRAR MENSAJE INFORMATIVO CUANDO NO HAY CONTEO
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div className="fo-card" style={{ maxWidth: 500, width: '100%', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>ℹ️</div>
+            <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '.5rem' }}>Cálculo de ingresos operativos</div>
+            <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.5rem' }}>
+              Como omitiste el conteo, los ingresos operativos se calculan automáticamente desde tu caja final:
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem', background: 'var(--fo-surface)', padding: '1.25rem', borderRadius: 12, marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.9rem' }}>
+                <span style={{ color: 'var(--fo-text-secondary)' }}>Caja final ingresada:</span>
+                <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500 }}>{fmt(parseFloat(cajaFinal || 0))}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.9rem' }}>
+                <span style={{ color: 'var(--fo-text-secondary)' }}>Menos caja inicial:</span>
+                <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-danger)' }}>-{fmt(cajaIni)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.9rem' }}>
+                <span style={{ color: 'var(--fo-text-secondary)' }}>Más gastos del día:</span>
+                <span style={{ fontFamily: 'var(--fo-font-mono)', fontWeight: 500, color: 'var(--fo-danger)' }}>+{fmt(gastosFromMovimientos)}</span>
+              </div>
+              <div style={{ height: '1px', background: 'var(--fo-border)', margin: '.5rem 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, fontSize: '1rem' }}>
+                <span>Ingresos operativos:</span>
+                <span style={{ fontFamily: 'var(--fo-font-mono)', color: 'var(--fo-primary)' }}>{fmt(ingresosOperativos)}</span>
+              </div>
+            </div>
+            <span className="badge badge-info">Calculado desde caja final</span>
+          </div>
+        </div>
+        )
       )}
 
       {/* PASO 4: Resumen */}

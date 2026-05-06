@@ -15,6 +15,12 @@ public class ConfirmarCierreRequest
     [Required][Range(0, double.MaxValue)] public decimal CajaFinalRegistrada { get; set; }
     public bool ConteoRealizado { get; set; } = false;
     public List<ConteoProductoItem> Conteos { get; set; } = [];
+    
+    /// <summary>Ingresos operativos calculados desde el frontend cuando NO se hizo conteo.</summary>
+    [Range(0, double.MaxValue)] public decimal? IngresosOperativosCalculados { get; set; }
+    
+    /// <summary>Gastos de jornada calculados desde el frontend cuando NO se hizo conteo.</summary>
+    [Range(0, double.MaxValue)] public decimal? GastosJornadaCalculados { get; set; }
 }
 
 public class CorregirCierreRequest

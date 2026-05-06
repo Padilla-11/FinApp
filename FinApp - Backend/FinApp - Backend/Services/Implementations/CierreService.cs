@@ -38,10 +38,15 @@ public class CierreService : ICierreService
             .Where(m => m.AfectaCaja)
             .Sum(m => m.Monto * m.SignoCaja);
 
-        // Gastos operativos registrados en movimientos
-        var gastosJornada = jornada.Movimientos
-            .Where(m => m.Tipo == "gasto_operativo" || m.Tipo == "compra_mercancia")
-            .Sum(m => m.Monto);
+        // Determinar si hay conteo
+        bool conteoRealizado = request.ConteoRealizado && request.Conteos.Count > 0;
+
+        // Gastos operativos: usar desde frontend si no hay conteo, sino desde movimientos
+        var gastosJornada = !conteoRealizado && request.GastosJornadaCalculados.HasValue
+            ? request.GastosJornadaCalculados.Value
+            : jornada.Movimientos
+                .Where(m => m.Tipo == "gasto_operativo" || m.Tipo == "compra_mercancia")
+                .Sum(m => m.Monto);
 
         // Costos fijos diarios proporcionales
         var costosFijosDia = await CalcularCostosFijosDiaAsync(negocioId, negocio.DiasOperacion.Length);
@@ -49,7 +54,6 @@ public class CierreService : ICierreService
         // Ingresos y costo vendido desde conteo (si se realizó) o estimado
         decimal ingresosOperativos;
         decimal costoVendido;
-        bool conteoRealizado = request.ConteoRealizado && request.Conteos.Count > 0;
 
         if (conteoRealizado)
         {
@@ -66,17 +70,25 @@ public class CierreService : ICierreService
         }
         else
         {
-            // Estimar desde caja: ingresos = incremento neto de caja + gastos ya pagados
-            // Fórmula: caja_esperada - caja_inicial = ingresos - gastos_y_retiros
-            var ingresosBrutos = jornada.Movimientos
-                .Where(m => m.SignoCaja == 1 && m.AfectaCaja)
-                .Sum(m => m.Monto);
-            ingresosOperativos = ingresosBrutos;
+            // Si el frontend envía los ingresos calculados desde caja final, usarlos
+            // Fórmula frontend: ingresos = cajaFinal - cajaInicial + gastos
+            if (request.IngresosOperativosCalculados.HasValue && request.IngresosOperativosCalculados > 0)
+            {
+                ingresosOperativos = request.IngresosOperativosCalculados.Value;
+            }
+            else
+            {
+                // Fallback: calcular desde movimientos (lógica antigua)
+                var ingresosBrutos = jornada.Movimientos
+                    .Where(m => m.SignoCaja == 1 && m.AfectaCaja)
+                    .Sum(m => m.Monto);
+                ingresosOperativos = ingresosBrutos;
+            }
 
-            // Sin conteo, estimamos el costo vendido con margen promedio de productos activos
+            // Calcular costo vendido con margen promedio de productos activos
             var margenPromedio = await _db.Productos
                 .Where(p => p.NegocioId == negocioId && p.EliminadoEn == null && p.Activo)
-                .AverageAsync(p => (double?)p.MargenPorcentaje) ?? 30;
+                .AverageAsync(p => (double?)p.MargenPorcentaje) ?? 20;
             costoVendido = ingresosOperativos * (1 - (decimal)margenPromedio / 100);
         }
 

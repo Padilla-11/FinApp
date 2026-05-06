@@ -70,7 +70,8 @@ export default function JornadaActiva() {
       setMovimientos([]);
       toast.success('Jornada abierta');
     } catch (err) {
-      toast.error(err.response?.data?.Mensaje || 'Error al abrir jornada');
+      const mensaje = err.response?.data?.mensaje || err.response?.data?.Mensaje || 'Error al abrir jornada';
+      toast.error(mensaje);
     } finally {
       setSaving(false);
     }

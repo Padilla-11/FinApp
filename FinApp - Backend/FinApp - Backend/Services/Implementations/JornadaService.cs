@@ -30,7 +30,7 @@ public class JornadaService : IJornadaService
         var existeHoy = await _db.Jornadas
             .AnyAsync(j => j.NegocioId == negocioId && j.FechaReferencia == hoy);
         if (existeHoy)
-            throw new InvalidOperationException($"Ya existe una jornada registrada para la fecha {hoy:dd/MM/yyyy}.");
+            throw new InvalidOperationException($"Solo puedes tener una jornada por día. Ya tienes una jornada (abierta o cerrada) para el {hoy:dd/MM/yyyy}.");
 
         var jornada = new Jornada
         {
