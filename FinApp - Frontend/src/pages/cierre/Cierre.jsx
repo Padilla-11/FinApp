@@ -60,6 +60,15 @@ export default function Cierre() {
   const cajaEsperada = movimientos.reduce((s, m) => s + (m.AfectaCaja ? (m.Monto || 0) * (m.SignoCaja || 1) : 0), cajaIni);
   const diferencia = parseFloat(cajaFinal || 0) - cajaEsperada;
 
+  // Calcular margen promedio de todos los productos registrados
+  const averageMargenPorcentaje = productos.length > 0
+    ? productos.reduce((sum, p) => sum + (p.MargenPorcentaje || 0), 0) / productos.length
+    : 20; // 20% por defecto si no hay productos
+  const averageMargenRatio = averageMargenPorcentaje / 100; // Convertir a decimal (0.20)
+
+  // Determinar si hay conteo (si se ingresaron unidades > 0)
+  const hayConteo = Object.values(conteos).some(v => v > 0);
+
   // Calcular ingresos por conteo (cuando se realiza conteo)
   const totalConteoIngresos = Object.entries(conteos).reduce((s, [id, uds]) => {
     const p = productos.find((x) => (x.Id || x.id) === parseInt(id));
@@ -67,7 +76,7 @@ export default function Cierre() {
   }, 0);
 
   // Calcular ingresos totales (con o sin conteo)
-  const ingresosOperativos = conteoRealizado 
+  const ingresosOperativos = hayConteo
     ? totalConteoIngresos 
     : movimientos
         .filter((m) => m.SignoCaja === 1 && m.AfectaCaja)
@@ -79,9 +88,9 @@ export default function Cierre() {
     return s + (p ? (p.CostoUnitario || 0) * uds : 0);
   }, 0);
 
-  const costoVendido = conteoRealizado
+  const costoVendido = hayConteo
     ? totalConteoCosto
-    : ingresosOperativos * 0.8; // 80% estimado
+    : ingresosOperativos * (1 - averageMargenRatio); // Promedio de productos
 
   // Gastos de jornada (gasto_operativo + compra_mercancia)
   const gastosJornada = movimientos
@@ -146,7 +155,11 @@ export default function Cierre() {
   }
 
   function goTo(n) {
-    if (n === 2 && !conteoRealizado && paso === 1) setConteoRealizado(false);
+    if (n === 2 && paso === 1) {
+      // Determinar si se realizó conteo o no basado en unidades ingresadas
+      const huboConteo = Object.values(conteos).some(v => v > 0);
+      setConteoRealizado(huboConteo);
+    }
     setPaso(n);
   }
 
@@ -228,7 +241,7 @@ export default function Cierre() {
             <div className="fo-card">
               <div style={{ fontSize: '.85rem', fontWeight: 500, marginBottom: '.5rem' }}>¿Por qué hacer el conteo?</div>
               <div style={{ fontSize: '.8125rem', color: 'var(--fo-text-secondary)', lineHeight: 1.75, marginBottom: '.875rem' }}>Permite calcular el <strong>margen exacto</strong> y validar si la caja cuadra con las ventas.</div>
-              <button className="btn btn-ghost btn-sm btn-block" onClick={() => { setConteoRealizado(false); goTo(2); }}>Omitir este paso</button>
+              <button className="btn btn-ghost btn-sm btn-block" onClick={() => { setConteos({}); goTo(2); }}>Omitir este paso</button>
               <div style={{ fontSize: '.775rem', color: 'var(--fo-text-muted)', textAlign: 'center', marginTop: '.375rem' }}>Los indicadores serán estimados</div>
             </div>
           </div>
@@ -310,10 +323,10 @@ export default function Cierre() {
           <div className="fo-card">
             <div className="fo-card-header">
               <div className="fo-card-title">Estado de resultados del día</div>
-              <span className={`badge ${conteoRealizado ? 'badge-success' : 'badge-neutral'}`}>{conteoRealizado ? 'Con conteo' : 'Estimado'}</span>
+              <span className={`badge ${hayConteo ? 'badge-success' : 'badge-neutral'}`}>{hayConteo ? 'Con conteo' : 'Estimado'}</span>
             </div>
             <SummaryRow label="Ingresos operativos" value={fmt(ingresosOperativos)} />
-            <SummaryRow label="Costo de lo vendido (80%)" value={fmt(costoVendido)} cls="s-neg" />
+            <SummaryRow label="Costo de lo vendido (promedio)" value={fmt(costoVendido)} cls="s-neg" />
             <SummaryRow label="Utilidad bruta" value={fmt(utilidadBruta)} cls="s-pos highlight" />
             <hr className="fo-divider" style={{ margin: '.5rem 0' }} />
             <SummaryRow label="Gastos de la jornada" value={fmt(gastosJornada)} cls="s-neg" />
@@ -385,7 +398,7 @@ export default function Cierre() {
 
             <div className="fo-card" style={{ background: 'var(--fo-surface)', border: 'none', textAlign: 'left', marginBottom: '1.25rem' }}>
               <SummaryRow label="Ingresos del día" value={fmt(ingresosOperativos)} />
-              <SummaryRow label="Costo estimado" value={fmt(costoVendido)} cls="s-neg" />
+              <SummaryRow label="Costo de lo vendido (promedio)" value={fmt(costoVendido)} cls="s-neg" />
               <SummaryRow label="Gastos operativos" value={fmt(gastosJornada)} cls="s-neg" />
               <SummaryRow label="Costos fijos" value={fmt(costosFijosDia)} cls="s-neg" />
               <hr style={{ margin: '.5rem 0', borderColor: 'var(--fo-border)' }} />
