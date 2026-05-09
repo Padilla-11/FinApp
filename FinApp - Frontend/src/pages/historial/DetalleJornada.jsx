@@ -34,18 +34,28 @@ export default function DetalleJornada() {
     if (!nid || !id) return;
     (async () => {
       try {
-        // Obtenemos el cierre buscándolo en el historial
+        // Primero obtener el cierre del historial para tener el JornadaId
         const hRes = await cierresApi.historial(nid, 1, 100);
-        const items = hRes.value?.data?.Data?.Items || hRes.data?.Data?.Items || [];
-        const c = items.find((x) => String(x.Id || x.id) === String(id));
-        setCierre(c || null);
+        const cierres = hRes.data?.Data || [];
+        const cierreData = cierres.find((x) => String(x.Id || x.id) === String(id));
 
-        if (c) {
-          const jid = c.JornadaId || c.jornadaId;
-          if (jid) {
-            const mRes = await jornadasApi.listarMovimientos(nid, jid);
-            setMovimientos(mRes.data.Data || []);
-          }
+        if (!cierreData) {
+          navigate('/historial');
+          return;
+        }
+
+        // Obtener datos completos del cierre usando el endpoint de obtener por jornada
+        const jid = cierreData.JornadaId || cierreData.jornadaId;
+        if (jid) {
+          const cierreRes = await cierresApi.obtener(nid, jid);
+          const cierreCompleto = cierreRes.data?.Data;
+          setCierre(cierreCompleto);
+
+          // Obtener movimientos de la jornada
+          const mRes = await jornadasApi.listarMovimientos(nid, jid);
+          setMovimientos(mRes.data.Data || []);
+        } else {
+          setCierre(cierreData);
         }
       } catch {
         navigate('/historial');
