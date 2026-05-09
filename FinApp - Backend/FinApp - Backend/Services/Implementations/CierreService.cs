@@ -182,6 +182,7 @@ public class CierreService : ICierreService
                 JornadaId = c.JornadaId,
                 FechaReferencia = c.Jornada.FechaReferencia,
                 IngresosOperativos = c.IngresosOperativos,
+                CostoVendido = c.CostoVendido,
                 UtilidadNeta = c.UtilidadNeta,
                 MargenGanancia = c.MargenGanancia,
                 EstadoDia = c.EstadoDia,

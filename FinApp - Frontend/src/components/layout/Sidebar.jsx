@@ -27,7 +27,7 @@ export default function Sidebar() {
   };
 
   const userName = user?.Nombre || user?.nombre || '';
-  const userRole = negocio?.Rol || 'propietario';
+  const userRole = negocio?.Rol || 'Propietario';
 
   function handleLogout() {
     logout();

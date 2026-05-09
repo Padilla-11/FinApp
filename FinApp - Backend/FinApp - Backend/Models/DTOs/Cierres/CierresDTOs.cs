@@ -78,6 +78,7 @@ public class HistorialCierreResponse
     public long JornadaId { get; set; }
     public DateOnly FechaReferencia { get; set; }
     public decimal IngresosOperativos { get; set; }
+    public decimal CostoVendido { get; set; }
     public decimal UtilidadNeta { get; set; }
     public decimal MargenGanancia { get; set; }
     public string EstadoDia { get; set; } = null!;
