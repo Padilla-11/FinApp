@@ -24,19 +24,19 @@ public class JornadaService : IJornadaService
         if (abierta)
             throw new InvalidOperationException("Ya existe una jornada abierta. Debe cerrarla antes de abrir una nueva.");
 
-        var hoy = DateOnly.FromDateTime(DateTime.Today);
+        var fechaRef = request.FechaReferencia ?? DateOnly.FromDateTime(DateTime.Today);
 
         // Verificar unicidad por fecha
-        var existeHoy = await _db.Jornadas
-            .AnyAsync(j => j.NegocioId == negocioId && j.FechaReferencia == hoy);
-        if (existeHoy)
-            throw new InvalidOperationException($"Solo puedes tener una jornada por día. Ya tienes una jornada (abierta o cerrada) para el {hoy:dd/MM/yyyy}.");
+        var existeFecha = await _db.Jornadas
+            .AnyAsync(j => j.NegocioId == negocioId && j.FechaReferencia == fechaRef);
+        if (existeFecha)
+            throw new InvalidOperationException($"Solo puedes tener una jornada por día. Ya tienes una jornada (abierta o cerrada) para el {fechaRef:dd/MM/yyyy}.");
 
         var jornada = new Jornada
         {
             NegocioId = negocioId,
             AbiertaPor = usuarioId,
-            FechaReferencia = hoy,
+            FechaReferencia = fechaRef,
             CajaInicial = request.CajaInicial,
             NotaApertura = request.NotaApertura,
             Estado = "abierta"

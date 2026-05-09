@@ -102,7 +102,7 @@ export default function DetalleJornada() {
     <>
       <div className="fo-topbar">
         <div>
-          <h1 className="fo-page-title">Jornada del {fmtFecha(cierre.CreadoEn || cierre.creadoEn)}</h1>
+          <h1 className="fo-page-title">Jornada del {fmtFecha(cierre.FechaReferencia || cierre.fechaReferencia || cierre.CreadoEn || cierre.creadoEn)}</h1>
           <p className="fo-page-sub">Cierre confirmado</p>
         </div>
         <div style={{ display: 'flex', gap: '.5rem' }}>

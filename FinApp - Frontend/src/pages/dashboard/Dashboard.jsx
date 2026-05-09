@@ -6,7 +6,7 @@ import { jornadasApi } from '../../api/jornadas';
 import { cuentasApi } from '../../api/otros';
 import { KpiCard, Alert, EstadoBadge } from '../../components/ui/index';
 import { fmt, fmtPct, fmtFechaCorta, fmtHora } from '../../utils/format';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export default function Dashboard() {
   const { negocio } = useApp();
@@ -28,7 +28,7 @@ export default function Dashboard() {
           jornadasApi.obtenerActiva(nid),
           cuentasApi.listar(nid),
         ]);
-        if (hRes.status === 'fulfilled') setHistorial(hRes.value.data.Data?.Items || []);
+        if (hRes.status === 'fulfilled') setHistorial(hRes.value.data?.Data || []);
         if (jRes.status === 'fulfilled') setJornada(jRes.value.data.Data);
         if (cRes.status === 'fulfilled') setCuentas(cRes.value.data.Data || []);
       } finally {
@@ -39,7 +39,8 @@ export default function Dashboard() {
 
   // Calcular KPIs del mes
   const mesActual = historial.filter((c) => {
-    const d = new Date(c.CreadoEn || c.creadoEn);
+    const fechaRef = c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn;
+    const d = new Date(fechaRef);
     const now = new Date();
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
@@ -47,23 +48,23 @@ export default function Dashboard() {
   const totalIngresos  = mesActual.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
   const totalUtilidad  = mesActual.reduce((s, c) => s + (c.UtilidadNeta || 0), 0);
   const margenProm     = mesActual.length ? mesActual.reduce((s, c) => s + (c.MargenGanancia || 0), 0) / mesActual.length : 0;
-  const diasRentables  = mesActual.filter((c) => c.EstadoDia === 'rentable').length;
+  const diasRentables  = mesActual.filter((c) => (c.EstadoDia || c.estadoDia) === 'rentable').length;
 
   const totalCobrar = cuentas.filter((c) => ['pendiente','cobrado_parcial'].includes(c.Estado || c.estado))
     .reduce((s, c) => s + ((c.MontoTotal || 0) - (c.MontoCobrado || 0)), 0);
 
   // Datos para gráfica
   const chartData = historial.slice(0, 14).reverse().map((c) => ({
-    fecha: fmtFechaCorta(c.CreadoEn || c.creadoEn),
-    Ingresos: c.IngresosOperativos || 0,
-    Gastos: (c.GastosJornada || 0) + (c.CostosFijosDia || 0) + (c.CostoVendido || 0),
+    fecha: fmtFechaCorta(c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn),
+    Ingresos: c.IngresosOperativos || c.ingresosOperativos || 0,
+    Gastos: (c.GastosJornada || c.gastosJornada || 0) + (c.CostosFijosDia || c.costosFijosDia || 0) + (c.CostoVendido || c.costoVendido || 0),
   }));
 
   const alertas = [];
   if (jornada) alertas.push({ type: 'warning', icon: '🟡', title: 'Jornada abierta', text: `Tienes una jornada abierta desde las ${fmtHora(jornada.AbiertaEn || jornada.abiertaEn)}` });
   if (totalCobrar > 0) alertas.push({ type: 'info', icon: 'ℹ️', title: 'Cuentas por cobrar', text: `Tienes ${fmt(totalCobrar)} pendientes de cobro.`, link: '/cuentas' });
   const racha = mesActual.slice(-3);
-  if (racha.length >= 2 && racha.every((c) => c.EstadoDia === 'perdida')) alertas.push({ type: 'danger', icon: '🔴', title: 'Racha negativa', text: 'Llevas varios días consecutivos sin superar el punto de equilibrio.' });
+  if (racha.length >= 2 && racha.every((c) => (c.EstadoDia || c.estadoDia) === 'perdida')) alertas.push({ type: 'danger', icon: '🔴', title: 'Racha negativa', text: 'Llevas varios días consecutivos sin superar el punto de equilibrio.' });
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
@@ -118,24 +119,15 @@ export default function Dashboard() {
           </div>
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="gIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#3A5068" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#3A5068" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="gGastos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#E05252" stopOpacity={0.12}/>
-                    <stop offset="95%" stopColor="#E05252" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
+              <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }} barGap={2}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--fo-border-light)" />
                 <XAxis dataKey="fecha" tick={{ fontSize: 11, fill: 'var(--fo-text-muted)' }} />
                 <YAxis tick={{ fontSize: 11, fill: 'var(--fo-text-muted)' }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}K`} />
                 <Tooltip formatter={(v, n) => [fmt(v), n]} labelStyle={{ fontWeight: 600 }} />
-                <Area type="monotone" dataKey="Ingresos" stroke="#3A5068" fill="url(#gIngresos)" strokeWidth={2} />
-                <Area type="monotone" dataKey="Gastos"   stroke="#E05252" fill="url(#gGastos)"   strokeWidth={2} />
-              </AreaChart>
+                <Legend />
+                <Bar dataKey="Ingresos" fill="#6B7C93" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Gastos" fill="#A3D9BD" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="fo-empty"><div className="fo-empty-icon">📊</div><div className="fo-empty-text">Aún no hay datos para mostrar</div></div>
@@ -174,11 +166,11 @@ export default function Dashboard() {
               <tbody>
                 {historial.slice(0, 5).map((c, i) => (
                   <tr key={i} style={{ cursor: 'pointer' }} onClick={() => navigate('/historial')}>
-                    <td>{fmtFechaCorta(c.CreadoEn || c.creadoEn)}</td>
+                    <td>{fmtFechaCorta(c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn)}</td>
                     <td className="amount">{fmt(c.IngresosOperativos)}</td>
                     <td className={`amount ${(c.UtilidadNeta || 0) >= 0 ? 'pos' : 'neg'}`}>{fmt(c.UtilidadNeta)}</td>
                     <td className="mono">{fmtPct(c.MargenGanancia)}</td>
-                    <td><EstadoBadge estado={c.EstadoDia} /></td>
+                    <td><EstadoBadge estado={c.EstadoDia || c.estadoDia} /></td>
                   </tr>
                 ))}
               </tbody>

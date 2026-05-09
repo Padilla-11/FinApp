@@ -8,6 +8,9 @@ import { Alert, EmptyState, EstadoBadge } from '../../components/ui/index';
 import { fmt, fmtHora, fmtFecha } from '../../utils/format';
 import toast from 'react-hot-toast';
 
+// --- MODO PRUEBA: descomenta la siguiente línea para activar ---
+import { getProximoDiaPrueba } from '../../utils/diasPrueba';
+
 const TIPOS_MOV = {
   gasto_operativo:       { label: 'Gasto operativo',       icon: '💸', cls: 'gasto',   signo: -1, title: 'Registrar gasto' },
   compra_mercancia:      { label: 'Compra de mercancía',   icon: '📦', cls: 'compra',  signo: -1, title: 'Compra de mercancía' },
@@ -64,6 +67,8 @@ export default function JornadaActiva() {
       const res = await jornadasApi.abrir(nid, {
         CajaInicial: parseFloat(cajaInicial),
         NotaApertura: notaApertura || null,
+        // --- MODO PRUEBA: descomenta la siguiente línea para usar secuencia de días ---
+        FechaReferencia: getProximoDiaPrueba(),
       });
       setJornada(res.data.Data);
       setModalApertura(false);

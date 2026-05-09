@@ -98,7 +98,7 @@ export default function Historial() {
                   const utilidad  = c.UtilidadNeta || 0;
                   const margen    = c.MargenGanancia || 0;
                   const diffCaja  = c.DiferenciaCaja || 0;
-                  const fecha     = c.CreadoEn || c.creadoEn;
+                  const fecha     = c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn;
                   return (
                     <tr key={i} style={{ cursor: 'pointer' }}>
                       <td style={{ fontWeight: 500 }}>{fmtFechaCorta(fecha)}</td>

@@ -6,6 +6,7 @@ public class AbrirJornadaRequest
 {
     [Required][Range(0, double.MaxValue)] public decimal CajaInicial { get; set; }
     public string? NotaApertura { get; set; }
+    public DateOnly? FechaReferencia { get; set; }
 }
 
 public class JornadaResponse
