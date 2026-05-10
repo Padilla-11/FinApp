@@ -138,8 +138,7 @@ public class FinopDbContext : DbContext
             e.Property(x => x.Nombre).HasColumnName("nombre").HasMaxLength(150).IsRequired();
             e.Property(x => x.Valor).HasColumnName("valor").HasColumnType("numeric(12,2)");
             e.Property(x => x.Frecuencia).HasColumnName("frecuencia").HasMaxLength(10).IsRequired();
-            e.Property(x => x.EquivalenteDiario).HasColumnName("equivalente_diario").HasColumnType("numeric(12,2)")
-             .ValueGeneratedOnAddOrUpdate();
+            e.Property(x => x.EquivalenteDiario).HasColumnName("equivalente_diario").HasColumnType("numeric(12,2)");
             e.Property(x => x.CreadoEn).HasColumnName("creado_en");
             e.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
             e.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");
@@ -157,8 +156,7 @@ public class FinopDbContext : DbContext
             e.Property(x => x.Cargo).HasColumnName("cargo").HasMaxLength(100);
             e.Property(x => x.TipoPago).HasColumnName("tipo_pago").HasMaxLength(10).IsRequired();
             e.Property(x => x.ValorPago).HasColumnName("valor_pago").HasColumnType("numeric(12,2)");
-            e.Property(x => x.CostoDiario).HasColumnName("costo_diario").HasColumnType("numeric(12,2)")
-             .ValueGeneratedOnAddOrUpdate();
+            e.Property(x => x.CostoDiario).HasColumnName("costo_diario").HasColumnType("numeric(12,2)");
             e.Property(x => x.CreadoEn).HasColumnName("creado_en");
             e.Property(x => x.ActualizadoEn).HasColumnName("actualizado_en");
             e.Property(x => x.EliminadoEn).HasColumnName("eliminado_en");

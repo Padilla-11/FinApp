@@ -85,6 +85,17 @@ builder.Services.AddScoped<ICierreService,       CierreService>();
 // Simulador
 builder.Services.AddScoped<ISimuladorService, SimuladorService>();
 
+// IA
+builder.Services.AddScoped<IIAService, IAService>();
+
+builder.Services.AddHttpClient("OpenCodeGo", client =>
+{
+    client.DefaultRequestHeaders.Authorization =
+        new System.Net.Http.Headers.AuthenticationHeaderValue(
+            "Bearer", builder.Configuration["IA:ApiKey"]);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // ─────────────────────────────────────────────────────────────
 // CORS
 // ─────────────────────────────────────────────────────────────
@@ -109,6 +120,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {
         opts.JsonSerializerOptions.PropertyNamingPolicy        = null; // PascalCase en JSON
+        opts.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         opts.JsonSerializerOptions.DefaultIgnoreCondition      =
             System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });

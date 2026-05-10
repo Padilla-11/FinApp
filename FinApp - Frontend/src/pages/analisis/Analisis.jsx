@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { cierresApi } from '../../api/cierres';
+import { iaApi } from '../../api/ia';
 import { fmt, fmtPct } from '../../utils/format';
 
 const SUGERENCIAS = [
@@ -35,28 +36,6 @@ export default function Analisis() {
     }
   }
 
-  // Construir contexto financiero del negocio para la IA
-  function construirContexto() {
-    const lista = historial.slice(0, periodo);
-    if (lista.length === 0) return 'No hay datos de jornadas aún.';
-
-    const totalIngresos = lista.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
-    const totalUtilidad = lista.reduce((s, c) => s + (c.UtilidadNeta || 0), 0);
-    const margenProm    = lista.length ? lista.reduce((s, c) => s + (c.MargenGanancia || 0), 0) / lista.length : 0;
-    const diasRentables = lista.filter((c) => c.EstadoDia === 'rentable').length;
-    const diasPerdida   = lista.filter((c) => c.EstadoDia === 'perdida').length;
-
-    return `Negocio: ${negocio?.Nombre || negocio?.nombre}
-Período analizado: últimos ${periodo} días (${lista.length} jornadas operadas)
-Ingresos totales: ${fmt(totalIngresos)}
-Utilidad neta acumulada: ${fmt(totalUtilidad)}
-Margen promedio: ${fmtPct(margenProm)}
-Días rentables: ${diasRentables} de ${lista.length}
-Días con pérdida: ${diasPerdida}
-Ingreso promedio por día: ${fmt(lista.length ? totalIngresos / lista.length : 0)}
-Últimas jornadas: ${lista.slice(0, 5).map((c) => `${c.EstadoDia} (${fmt(c.IngresosOperativos || 0)}, margen ${fmtPct(c.MargenGanancia || 0)})`).join(', ')}`;
-  }
-
   async function enviarMensaje(texto) {
     const msg = texto || input.trim();
     if (!msg) return;
@@ -64,41 +43,28 @@ Ingreso promedio por día: ${fmt(lista.length ? totalIngresos / lista.length : 0
     setMensajes((p) => [...p, { rol: 'user', texto: msg }]);
     setCargando(true);
 
-    const contexto = construirContexto();
-    const historialChat = mensajes.map((m) => ({ role: m.rol === 'user' ? 'user' : 'assistant', content: m.texto }));
+    const historialChat = mensajes.map((m) => ({
+      rol: m.rol === 'user' ? 'user' : 'assistant',
+      contenido: m.texto,
+    }));
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: `Eres FinOp IA, un asistente financiero especializado en microempresas colombianas. 
-Analiza los datos del negocio y responde en español de forma clara, práctica y empática.
-Usa emojis cuando sea apropiado. Sé concreto y da recomendaciones accionables.
-Da respuestas cortas (máximo 3 párrafos) a menos que se pida análisis detallado.
-
-DATOS ACTUALES DEL NEGOCIO:
-${contexto}`,
-          messages: [
-            ...historialChat,
-            { role: 'user', content: msg },
-          ],
-        }),
+      const response = await iaApi.consultar(nid, {
+        mensaje: msg,
+        historial: historialChat,
+        periodoDias: periodo,
       });
 
-      const data = await response.json();
-      const respuesta = data.content?.[0]?.text || 'No pude generar una respuesta. Intenta de nuevo.';
-      setMensajes((p) => [...p, { rol: 'ai', texto: respuesta }]);
+      const data = response.data;
+      setMensajes((p) => [...p, { rol: 'ai', texto: data.Respuesta || data.respuesta || 'Sin respuesta.' }]);
     } catch {
-      setMensajes((p) => [...p, { rol: 'ai', texto: 'Hubo un error al conectar con la IA. Verifica tu conexión e intenta de nuevo.' }]);
+      setMensajes((p) => [...p, { rol: 'ai', texto: 'Hubo un error al conectar con el asistente IA. Intenta de nuevo.' }]);
     } finally {
       setCargando(false);
     }
   }
 
-  // Métricas para el diagnóstico
+// Métricas para el diagnóstico
   const lista = historial.slice(0, periodo);
   const totalIngresos = lista.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
   const totalUtilidad = lista.reduce((s, c) => s + (c.UtilidadNeta || 0), 0);

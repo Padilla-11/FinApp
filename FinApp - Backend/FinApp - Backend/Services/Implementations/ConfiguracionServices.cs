@@ -9,6 +9,22 @@ using Microsoft.EntityFrameworkCore;
 namespace Finop.API.Services.Implementations;
 
 // ═══════════════════════════════════════════════════════════════════
+// MÉTODOS AUXILIARES
+// ═══════════════════════════════════════════════════════════════════
+public static class CostoHelper
+{
+    public static decimal CalcularCostoDiario(decimal valor, string frecuencia, short[]? diasOperacion)
+    {
+        if (frecuencia == "diaria") return valor;
+        if (frecuencia == "semanal") return valor / 7;
+
+        var diasSemana = diasOperacion?.Length ?? 6;
+        var diasMes = Math.Round(diasSemana * 4.33m);
+        return valor / diasMes;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // PRODUCTOS
 // ═══════════════════════════════════════════════════════════════════
 public class ProductoService : IProductoService
@@ -203,6 +219,7 @@ public class CostoFijoService : ICostoFijoService
     {
         await _acceso.VerificarPropietarioAsync(negocioId, usuarioId);
 
+        var negocio = await _db.Negocios.FindAsync(negocioId);
         var costo = new CostoFijo
         {
             NegocioId  = negocioId,
@@ -210,9 +227,9 @@ public class CostoFijoService : ICostoFijoService
             Valor      = request.Valor,
             Frecuencia = request.Frecuencia
         };
+        costo.EquivalenteDiario = CostoHelper.CalcularCostoDiario(costo.Valor, costo.Frecuencia, negocio?.DiasOperacion);
         _db.CostosFijos.Add(costo);
         await _db.SaveChangesAsync();
-        await _db.Entry(costo).ReloadAsync(); // columna generada equivalente_diario
         return MapCosto(costo);
     }
 
@@ -229,6 +246,8 @@ public class CostoFijoService : ICostoFijoService
         if (request.Valor.HasValue)        costo.Valor      = request.Valor.Value;
         if (request.Frecuencia is not null) costo.Frecuencia = request.Frecuencia;
 
+        var negocio = await _db.Negocios.FindAsync(negocioId);
+        costo.EquivalenteDiario = CostoHelper.CalcularCostoDiario(costo.Valor, costo.Frecuencia, negocio?.DiasOperacion);
         costo.ActualizadoEn = DateTimeOffset.UtcNow;
         await _db.SaveChangesAsync();
         await _db.Entry(costo).ReloadAsync();
@@ -282,6 +301,7 @@ public class EmpleadoService : IEmpleadoService
     {
         await _acceso.VerificarPropietarioAsync(negocioId, usuarioId);
 
+        var negocio = await _db.Negocios.FindAsync(negocioId);
         var empleado = new Empleado
         {
             NegocioId  = negocioId,
@@ -290,9 +310,9 @@ public class EmpleadoService : IEmpleadoService
             TipoPago   = request.TipoPago,
             ValorPago  = request.ValorPago
         };
+        empleado.CostoDiario = CostoHelper.CalcularCostoDiario(empleado.ValorPago, empleado.TipoPago, negocio?.DiasOperacion);
         _db.Empleados.Add(empleado);
         await _db.SaveChangesAsync();
-        await _db.Entry(empleado).ReloadAsync(); // columna generada costo_diario
         return MapEmpleado(empleado);
     }
 
@@ -310,6 +330,8 @@ public class EmpleadoService : IEmpleadoService
         if (request.TipoPago is not null) empleado.TipoPago = request.TipoPago;
         if (request.ValorPago.HasValue)   empleado.ValorPago = request.ValorPago.Value;
 
+        var negocio = await _db.Negocios.FindAsync(negocioId);
+        empleado.CostoDiario = CostoHelper.CalcularCostoDiario(empleado.ValorPago, empleado.TipoPago, negocio?.DiasOperacion);
         empleado.ActualizadoEn = DateTimeOffset.UtcNow;
         await _db.SaveChangesAsync();
         await _db.Entry(empleado).ReloadAsync();

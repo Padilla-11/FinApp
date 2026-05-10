@@ -31,6 +31,10 @@ export default function Configuracion() {
   const [modalCat, setModalCat]       = useState(false);
   const [modalUser, setModalUser]     = useState(false);
 
+  // Edición
+  const [editandoId, setEditandoId]   = useState(null);
+  const [tipoEditando, setTipoEditando] = useState(null);
+
   // Forms
   const [prodForm, setProdForm]   = useState({ nombre: '', precio: '', costo: '' });
   const [costoForm, setCostoForm] = useState({ nombre: '', valor: '', frecuencia: 'mensual' });
@@ -100,9 +104,14 @@ export default function Configuracion() {
     if (!prodForm.nombre || !prodForm.precio || !prodForm.costo) { toast.error('Todos los campos son requeridos'); return; }
     setSaving(true);
     try {
-      await productosApi.crear(nid, { Nombre: prodForm.nombre, PrecioVenta: parseFloat(prodForm.precio), CostoUnitario: parseFloat(prodForm.costo) });
-      setModalProd(false); setProdForm({ nombre: '', precio: '', costo: '' });
-      cargarTodo(); toast.success('Producto agregado');
+      if (editandoId) {
+        await productosApi.actualizar(nid, editandoId, { Nombre: prodForm.nombre, PrecioVenta: parseFloat(prodForm.precio), CostoUnitario: parseFloat(prodForm.costo) });
+        toast.success('Producto actualizado');
+      } else {
+        await productosApi.crear(nid, { Nombre: prodForm.nombre, PrecioVenta: parseFloat(prodForm.precio), CostoUnitario: parseFloat(prodForm.costo) });
+        toast.success('Producto agregado');
+      }
+      cargarTodo(); cerrarModalProd();
     } catch (err) { toast.error(err.response?.data?.Mensaje || 'Error'); } finally { setSaving(false); }
   }
 
@@ -116,9 +125,14 @@ export default function Configuracion() {
     if (!costoForm.nombre || !costoForm.valor) { toast.error('Nombre y valor son requeridos'); return; }
     setSaving(true);
     try {
-      await costosFijosApi.crear(nid, { Nombre: costoForm.nombre, Valor: parseFloat(costoForm.valor), Frecuencia: costoForm.frecuencia });
-      setModalCosto(false); setCostoForm({ nombre: '', valor: '', frecuencia: 'mensual' });
-      cargarTodo(); toast.success('Costo fijo agregado');
+      if (editandoId) {
+        await costosFijosApi.actualizar(nid, editandoId, { Nombre: costoForm.nombre, Valor: parseFloat(costoForm.valor), Frecuencia: costoForm.frecuencia });
+        toast.success('Costo fijo actualizado');
+      } else {
+        await costosFijosApi.crear(nid, { Nombre: costoForm.nombre, Valor: parseFloat(costoForm.valor), Frecuencia: costoForm.frecuencia });
+        toast.success('Costo fijo agregado');
+      }
+      cargarTodo(); cerrarModalCosto();
     } catch { toast.error('Error'); } finally { setSaving(false); }
   }
 
@@ -132,9 +146,14 @@ export default function Configuracion() {
     if (!empForm.nombre || !empForm.valorPago) { toast.error('Nombre y valor son requeridos'); return; }
     setSaving(true);
     try {
-      await empleadosApi.crear(nid, { Nombre: empForm.nombre, Cargo: empForm.cargo || null, TipoPago: empForm.tipoPago, ValorPago: parseFloat(empForm.valorPago) });
-      setModalEmp(false); setEmpForm({ nombre: '', cargo: '', tipoPago: 'mensual', valorPago: '' });
-      cargarTodo(); toast.success('Empleado agregado');
+      if (editandoId) {
+        await empleadosApi.actualizar(nid, editandoId, { Nombre: empForm.nombre, Cargo: empForm.cargo || null, TipoPago: empForm.tipoPago, ValorPago: parseFloat(empForm.valorPago) });
+        toast.success('Empleado actualizado');
+      } else {
+        await empleadosApi.crear(nid, { Nombre: empForm.nombre, Cargo: empForm.cargo || null, TipoPago: empForm.tipoPago, ValorPago: parseFloat(empForm.valorPago) });
+        toast.success('Empleado agregado');
+      }
+      cargarTodo(); cerrarModalEmp();
     } catch { toast.error('Error'); } finally { setSaving(false); }
   }
 
@@ -142,6 +161,61 @@ export default function Configuracion() {
     if (!confirm('¿Eliminar este empleado?')) return;
     try { await empleadosApi.eliminar(nid, eid); cargarTodo(); toast.success('Eliminado'); }
     catch { toast.error('Error al eliminar'); }
+  }
+
+  function iniciarEdicionProducto(p) {
+    setEditandoId(p.Id || p.id);
+    setTipoEditando('producto');
+    setProdForm({
+      nombre: p.Nombre || p.nombre || '',
+      precio: String(p.PrecioVenta || p.precioVenta || ''),
+      costo: String(p.CostoUnitario || p.costoUnitario || ''),
+    });
+    setModalProd(true);
+  }
+
+  function iniciarEdicionCosto(c) {
+    setEditandoId(c.Id || c.id);
+    setTipoEditando('costo');
+    setCostoForm({
+      nombre: c.Nombre || c.nombre || '',
+      valor: String(c.Valor || c.valor || ''),
+      frecuencia: c.Frecuencia || c.frecuencia || 'mensual',
+    });
+    setModalCosto(true);
+  }
+
+  function iniciarEdicionEmpleado(e) {
+    setEditandoId(e.Id || e.id);
+    setTipoEditando('empleado');
+    setEmpForm({
+      nombre: e.Nombre || e.nombre || '',
+      cargo: e.Cargo || e.cargo || '',
+      tipoPago: e.TipoPago || e.tipoPago || 'mensual',
+      valorPago: String(e.ValorPago || e.valorPago || ''),
+    });
+    setModalEmp(true);
+  }
+
+  function cerrarModalProd() {
+    setModalProd(false);
+    setEditandoId(null);
+    setTipoEditando(null);
+    setProdForm({ nombre: '', precio: '', costo: '' });
+  }
+
+  function cerrarModalCosto() {
+    setModalCosto(false);
+    setEditandoId(null);
+    setTipoEditando(null);
+    setCostoForm({ nombre: '', valor: '', frecuencia: 'mensual' });
+  }
+
+  function cerrarModalEmp() {
+    setModalEmp(false);
+    setEditandoId(null);
+    setTipoEditando(null);
+    setEmpForm({ nombre: '', cargo: '', tipoPago: 'mensual', valorPago: '' });
   }
 
   async function addCategoria() {
@@ -164,13 +238,15 @@ export default function Configuracion() {
     } catch (err) { toast.error(err.response?.data?.Mensaje || 'Error'); } finally { setSaving(false); }
   }
 
+  const diasOperativos = (negocio?.DiasOperacion || negocio?.diasOperacion || []).length || 6;
+
   const totalFijosMes = costos.reduce((s, c) => {
     const v = c.Valor || 0;
     const f = c.Frecuencia || c.frecuencia;
     return s + (f === 'mensual' ? v : f === 'semanal' ? v * 4.33 : v * 30);
   }, 0);
-  const totalFijosDia = costos.reduce((s, c) => s + (c.EquivalenteDiario || equivDiario(c.Valor || 0, c.Frecuencia || c.frecuencia)), 0);
-  const totalNominaDia = empleados.reduce((s, e) => s + (e.CostoDiario || equivDiario(e.ValorPago || 0, e.TipoPago || e.tipoPago)), 0);
+  const totalFijosDia = costos.reduce((s, c) => s + (c.EquivalenteDiario || equivDiario(c.Valor || 0, c.Frecuencia || c.frecuencia, diasOperativos)), 0);
+  const totalNominaDia = empleados.reduce((s, e) => s + (e.CostoDiario || equivDiario(e.ValorPago || 0, e.TipoPago || e.tipoPago, diasOperativos)), 0);
 
   const TABS = [
     { key: 'negocio', label: 'Negocio' },
@@ -257,7 +333,7 @@ export default function Configuracion() {
                         <td className="amount">{fmt(p.CostoUnitario)}</td>
                         <td><span className={`badge ${margen >= 30 ? 'badge-success' : margen >= 15 ? 'badge-warning' : 'badge-danger'}`}>{margen?.toFixed(1)}%</span></td>
                         <td><span className={`badge ${(p.Activo ?? true) ? 'badge-success' : 'badge-neutral'}`}>{(p.Activo ?? true) ? 'Activo' : 'Inactivo'}</span></td>
-                        <td><button className="btn btn-danger btn-sm" onClick={() => eliminarProducto(pid)}>Eliminar</button></td>
+                        <td style={{ display: 'flex', gap: '0.5rem' }}><button className="btn btn-ghost btn-sm" onClick={() => iniciarEdicionProducto(p)}>Editar</button><button className="btn btn-danger btn-sm" onClick={() => eliminarProducto(pid)}>Eliminar</button></td>
                       </tr>
                     );
                   })}
@@ -285,14 +361,14 @@ export default function Configuracion() {
                 <tbody>
                   {costos.map((c) => {
                     const cid = c.Id || c.id;
-                    const ed  = c.EquivalenteDiario || equivDiario(c.Valor || 0, c.Frecuencia || c.frecuencia);
+                    const ed  = c.EquivalenteDiario || equivDiario(c.Valor || 0, c.Frecuencia || c.frecuencia, diasOperativos);
                     return (
                       <tr key={cid}>
                         <td style={{ fontWeight: 500 }}>{c.Nombre || c.nombre}</td>
                         <td className="amount">{fmt(c.Valor || c.valor)}</td>
                         <td><span className="badge badge-neutral">{c.Frecuencia || c.frecuencia}</span></td>
                         <td className="mono">{fmt(ed)}</td>
-                        <td><button className="btn btn-danger btn-sm" onClick={() => eliminarCosto(cid)}>Eliminar</button></td>
+                        <td style={{ display: 'flex', gap: '0.5rem' }}><button className="btn btn-ghost btn-sm" onClick={() => iniciarEdicionCosto(c)}>Editar</button><button className="btn btn-danger btn-sm" onClick={() => eliminarCosto(cid)}>Eliminar</button></td>
                       </tr>
                     );
                   })}
@@ -320,7 +396,7 @@ export default function Configuracion() {
                 <tbody>
                   {empleados.map((e) => {
                     const eid = e.Id || e.id;
-                    const cd  = e.CostoDiario || equivDiario(e.ValorPago || 0, e.TipoPago || e.tipoPago);
+                    const cd  = e.CostoDiario || equivDiario(e.ValorPago || 0, e.TipoPago || e.tipoPago, diasOperativos);
                     return (
                       <tr key={eid}>
                         <td style={{ fontWeight: 500 }}>{e.Nombre || e.nombre}</td>
@@ -328,7 +404,7 @@ export default function Configuracion() {
                         <td><span className="badge badge-neutral">{e.TipoPago || e.tipoPago}</span></td>
                         <td className="amount">{fmt(e.ValorPago || e.valorPago)}</td>
                         <td className="mono">{fmt(cd)}</td>
-                        <td><button className="btn btn-danger btn-sm" onClick={() => eliminarEmpleado(eid)}>Eliminar</button></td>
+                        <td style={{ display: 'flex', gap: '0.5rem' }}><button className="btn btn-ghost btn-sm" onClick={() => iniciarEdicionEmpleado(e)}>Editar</button><button className="btn btn-danger btn-sm" onClick={() => eliminarEmpleado(eid)}>Eliminar</button></td>
                       </tr>
                     );
                   })}
@@ -376,7 +452,7 @@ export default function Configuracion() {
       )}
 
       {/* Modales */}
-      <Modal open={modalProd} onClose={() => setModalProd(false)} title="Agregar producto"
+      <Modal open={modalProd} onClose={cerrarModalProd} title={editandoId ? 'Editar producto' : 'Agregar producto'}
         footer={<><button className="btn btn-ghost" onClick={() => setModalProd(false)}>Cancelar</button><button className="btn btn-primary" onClick={addProducto} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button></>}>
         <div className="form-group"><label className="label-text">Nombre <span className="required">*</span></label><input className="fo-input" placeholder="Nombre del producto" value={prodForm.nombre} onChange={(e) => setProdForm((p) => ({ ...p, nombre: e.target.value }))} /></div>
         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -386,7 +462,7 @@ export default function Configuracion() {
         {prodForm.precio && prodForm.costo && <div className="fo-hint">Margen: <strong>{(((prodForm.precio - prodForm.costo) / prodForm.precio) * 100).toFixed(1)}%</strong></div>}
       </Modal>
 
-      <Modal open={modalCosto} onClose={() => setModalCosto(false)} title="Agregar costo fijo"
+      <Modal open={modalCosto} onClose={cerrarModalCosto} title={editandoId ? 'Editar costo fijo' : 'Agregar costo fijo'}
         footer={<><button className="btn btn-ghost" onClick={() => setModalCosto(false)}>Cancelar</button><button className="btn btn-primary" onClick={addCosto} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button></>}>
         <div className="form-group"><label className="label-text">Nombre <span className="required">*</span></label><input className="fo-input" placeholder="Ej: Arriendo local" value={costoForm.nombre} onChange={(e) => setCostoForm((p) => ({ ...p, nombre: e.target.value }))} /></div>
         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -397,10 +473,10 @@ export default function Configuracion() {
             </select>
           </div>
         </div>
-        {costoForm.valor && <div className="fo-hint">Equiv. diario: <strong>{fmt(equivDiario(costoForm.valor, costoForm.frecuencia))}</strong></div>}
+        {costoForm.valor && <div className="fo-hint">Equiv. diario: <strong>{fmt(equivDiario(costoForm.valor, costoForm.frecuencia, diasOperativos))}</strong></div>}
       </Modal>
 
-      <Modal open={modalEmp} onClose={() => setModalEmp(false)} title="Agregar empleado"
+      <Modal open={modalEmp} onClose={cerrarModalEmp} title={editandoId ? 'Editar empleado' : 'Agregar empleado'}
         footer={<><button className="btn btn-ghost" onClick={() => setModalEmp(false)}>Cancelar</button><button className="btn btn-primary" onClick={addEmpleado} disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button></>}>
         <div className="form-group"><label className="label-text">Nombre <span className="required">*</span></label><input className="fo-input" placeholder="Nombre completo" value={empForm.nombre} onChange={(e) => setEmpForm((p) => ({ ...p, nombre: e.target.value }))} /></div>
         <div className="form-group"><label className="label-text">Cargo</label><input className="fo-input" placeholder="Ej: Cajera" value={empForm.cargo} onChange={(e) => setEmpForm((p) => ({ ...p, cargo: e.target.value }))} /></div>
@@ -412,7 +488,7 @@ export default function Configuracion() {
           </div>
           <div style={{ flex: 1 }}><label className="label-text">Valor <span className="required">*</span></label><input className="fo-input" type="number" placeholder="0" value={empForm.valorPago} onChange={(e) => setEmpForm((p) => ({ ...p, valorPago: e.target.value }))} /></div>
         </div>
-        {empForm.valorPago && <div className="fo-hint">Costo diario: <strong>{fmt(equivDiario(empForm.valorPago, empForm.tipoPago))}</strong></div>}
+        {empForm.valorPago && <div className="fo-hint">Costo diario: <strong>{fmt(equivDiario(empForm.valorPago, empForm.tipoPago, diasOperativos))}</strong></div>}
       </Modal>
 
       <Modal open={modalCat} onClose={() => setModalCat(false)} title="Nueva categoría de gasto"
