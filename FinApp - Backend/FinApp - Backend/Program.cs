@@ -93,7 +93,7 @@ builder.Services.AddHttpClient("OpenCodeGo", client =>
     client.DefaultRequestHeaders.Authorization =
         new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer", builder.Configuration["IA:ApiKey"]);
-    client.Timeout = TimeSpan.FromSeconds(30);
+    client.Timeout = TimeSpan.FromSeconds(90);
 });
 
 // ─────────────────────────────────────────────────────────────

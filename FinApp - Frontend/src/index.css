@@ -383,6 +383,29 @@ input, select, textarea { font-family: var(--fo-font); }
 .mb-4 { margin-bottom: 1.5rem; }
 .mt-3 { margin-top: 1rem; }
 
+/* ── Diagnóstico IA ─────────────────────────────────────── */
+.diagnostico-loading { padding: 2.5rem 1.5rem; text-align: center; }
+.diagnostico-loading-spinner { width: 36px; height: 36px; border: 3px solid var(--fo-border-light); border-top-color: var(--fo-primary); border-radius: 50%; animation: diag-spin .7s linear infinite; margin: 0 auto 1rem; }
+@keyframes diag-spin { to { transform: rotate(360deg); } }
+.diagnostico-loading p { margin: 0; color: var(--fo-text-secondary); }
+.diagnostico-empty { padding: 2.5rem 1.5rem; text-align: center; color: var(--fo-text-muted); }
+.diagnostico-section { padding: 1rem 1.25rem; }
+.diagnostico-section + .diagnostico-section { border-top: 1px solid var(--fo-border-light); }
+.diagnostico-section-title { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--fo-text-muted); margin: 0 0 .75rem 0; }
+.diagnostico-estado-general { font-size: .875rem; line-height: 1.7; color: var(--fo-text-secondary); margin: 0; }
+.diagnostico-lista-positivos { display: flex; flex-direction: column; gap: .875rem; }
+.pp-item { background: var(--fo-info-lt); border-radius: var(--fo-radius); padding: .875rem 1rem; }
+.pp-item strong { display: block; font-size: .85rem; margin-bottom: .25rem; color: var(--fo-accent-dark); }
+.pp-item p { margin: 0; font-size: .82rem; line-height: 1.55; color: var(--fo-text-secondary); }
+.diagnostico-lista-mejorar { display: flex; flex-direction: column; gap: 1rem; }
+.pm-item { background: var(--fo-surface); border-radius: var(--fo-radius); padding: .875rem 1rem; border: 1px solid var(--fo-border-light); }
+.pm-item strong { font-size: .85rem; color: var(--fo-text); }
+.pm-detalle { margin: .25rem 0 .625rem 0; font-size: .82rem; line-height: 1.55; color: var(--fo-text-secondary); }
+.pm-consejo, .pm-contexto { font-size: .8rem; line-height: 1.5; padding: .5rem .625rem; border-radius: var(--fo-radius); margin-top: .375rem; }
+.pm-consejo { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.pm-contexto { background: var(--fo-info-lt); color: var(--fo-text-secondary); border: 1px solid var(--fo-border-light); }
+.diagnostico-consejo-general { background: linear-gradient(135deg, var(--fo-primary) 0%, #5a6b8a 100%); color: #fff; padding: 1rem 1.125rem; border-radius: var(--fo-radius); font-size: .875rem; line-height: 1.65; margin-top: .5rem; }
+
 /* ── Skeleton ───────────────────────────────────────────── */
 .skeleton { background: linear-gradient(90deg, var(--fo-surface) 25%, var(--fo-border-light) 50%, var(--fo-surface) 75%); background-size: 200% 100%; animation: skeleton 1.5s infinite; border-radius: var(--fo-radius); height: 16px; }
 @keyframes skeleton { 0%{background-position:200% 0} 100%{background-position:-200% 0} }

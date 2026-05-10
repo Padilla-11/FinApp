@@ -8,4 +8,9 @@ public interface IIAService
         long negocioId,
         long usuarioId,
         ConsultaIARequest request);
+
+    Task<DiagnosticoIAResponse> GenerarDiagnosticoAsync(
+        long negocioId,
+        long usuarioId,
+        DiagnosticoIARequest request);
 }

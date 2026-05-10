@@ -16,6 +16,12 @@ export function AppProvider({ children }) {
   const [rol, setRol] = useState(null);
   const [loading, setLoading]   = useState(false);
 
+  const [iaMensajes, setIaMensajes] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('finop_ia_mensajes') || '[]'); } catch { return []; }
+  });
+  const [iaDiagnostico, setIaDiagnostico] = useState(null);
+  const [iaPeriodo, setIaPeriodo] = useState(30);
+
   const isAuth = !!token;
 
   async function login(correo, contrasena) {
@@ -42,11 +48,17 @@ export function AppProvider({ children }) {
     localStorage.removeItem('finop_token');
     localStorage.removeItem('finop_user');
     localStorage.removeItem('finop_negocio');
+    sessionStorage.removeItem('finop_ia_mensajes');
     setToken(null);
     setUser(null);
     setNegocio(null);
     setNegocios([]);
     setRol(null);
+  }
+
+  function actualizarIaMensajes(mensajes) {
+    setIaMensajes(mensajes);
+    sessionStorage.setItem('finop_ia_mensajes', JSON.stringify(mensajes));
   }
 
   function seleccionarNegocio(neg) {
@@ -86,6 +98,7 @@ export function AppProvider({ children }) {
       loading,
       login, registrar, logout,
       seleccionarNegocio, cargarNegocios,
+      iaMensajes, setIaMensajes: actualizarIaMensajes, iaDiagnostico, setIaDiagnostico, iaPeriodo, setIaPeriodo,
     }}>
       {children}
     </AppContext.Provider>
