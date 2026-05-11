@@ -53,18 +53,25 @@ public class NegociosController : ControllerBase
         return Ok(ApiResponse<object>.Ok(null!, "Negocio eliminado."));
     }
 
-    [HttpPost("{negocioId:long}/miembros")]
-    public async Task<ActionResult<ApiResponse<object>>> InvitarOperador(
-        long negocioId, [FromBody] InvitarOperadorRequest request)
+    [HttpGet("{negocioId:long}/miembros")]
+    public async Task<ActionResult<ApiResponse<List<MiembroResponse>>>> ListarMiembros(long negocioId)
     {
-        await _svc.InvitarOperadorAsync(negocioId, UsuarioId, request);
-        return Ok(ApiResponse<object>.Ok(null!, "Operador invitado exitosamente."));
+        var data = await _svc.ObtenerMiembrosAsync(negocioId, UsuarioId);
+        return Ok(ApiResponse<List<MiembroResponse>>.Ok(data));
+    }
+
+    [HttpPost("{negocioId:long}/miembros")]
+    public async Task<ActionResult<ApiResponse<MiembroResponse>>> CrearMiembro(
+        long negocioId, [FromBody] CrearMiembroRequest request)
+    {
+        var data = await _svc.CrearMiembroAsync(negocioId, UsuarioId, request);
+        return Ok(ApiResponse<MiembroResponse>.Ok(data, "Usuario registrado exitosamente."));
     }
 
     [HttpDelete("{negocioId:long}/miembros/{miembroId:long}")]
-    public async Task<ActionResult<ApiResponse<object>>> RemoverMiembro(long negocioId, long miembroId)
+    public async Task<ActionResult<ApiResponse<object>>> EliminarMiembro(long negocioId, long miembroId)
     {
-        await _svc.RemoverMiembroAsync(negocioId, UsuarioId, miembroId);
-        return Ok(ApiResponse<object>.Ok(null!, "Miembro removido."));
+        await _svc.EliminarMiembroAsync(negocioId, UsuarioId, miembroId);
+        return Ok(ApiResponse<object>.Ok(null!, "Usuario eliminado del negocio."));
     }
 }

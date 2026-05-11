@@ -121,41 +121,88 @@ public class NegocioService : INegocioService
         await _db.SaveChangesAsync();
     }
 
-    public async Task InvitarOperadorAsync(long negocioId, long usuarioPropietarioId, InvitarOperadorRequest request)
+    public async Task<List<MiembroResponse>> ObtenerMiembrosAsync(long negocioId, long usuarioId)
+    {
+        await _acceso.VerificarAccesoAsync(negocioId, usuarioId);
+
+        return await _db.UsuariosNegocios
+            .Where(un => un.NegocioId == negocioId && un.EliminadoEn == null)
+            .Include(un => un.Usuario)
+            .Select(un => new MiembroResponse
+            {
+                Id       = un.UsuarioId,
+                Nombre   = un.Usuario.Nombre,
+                Correo   = un.Usuario.Correo,
+                Rol      = un.Rol,
+                CreadoEn = un.CreadoEn
+            })
+            .OrderByDescending(m => m.CreadoEn)
+            .ToListAsync();
+    }
+
+    public async Task<MiembroResponse> CrearMiembroAsync(long negocioId, long usuarioPropietarioId, CrearMiembroRequest request)
     {
         await _acceso.VerificarPropietarioAsync(negocioId, usuarioPropietarioId);
 
-        var operador = await _db.Usuarios
-            .FirstOrDefaultAsync(u => u.Correo == request.CorreoOperador.ToLower() && u.EliminadoEn == null)
-            ?? throw new KeyNotFoundException("No existe usuario con ese correo registrado en FINOP.");
+        var correo = request.Correo.ToLower().Trim();
+        var usuario = await _db.Usuarios
+            .FirstOrDefaultAsync(u => u.Correo == correo && u.EliminadoEn == null);
 
-        var yaExiste = await _db.UsuariosNegocios
-            .AnyAsync(un => un.NegocioId == negocioId && un.UsuarioId == operador.Id && un.EliminadoEn == null);
-        if (yaExiste)
-            throw new InvalidOperationException("Ese usuario ya tiene acceso al negocio.");
+        if (usuario is not null)
+        {
+            var yaTieneNegocio = await _db.UsuariosNegocios
+                .AnyAsync(un => un.UsuarioId == usuario.Id && un.EliminadoEn == null);
+            if (yaTieneNegocio)
+                throw new InvalidOperationException("Ese usuario ya pertenece a otro negocio.");
+        }
+        else
+        {
+            usuario = new Usuario
+            {
+                Nombre         = request.Nombre.Trim(),
+                Correo         = correo,
+                ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            };
+            _db.Usuarios.Add(usuario);
+            await _db.SaveChangesAsync();
+        }
 
         _db.UsuariosNegocios.Add(new UsuarioNegocio
         {
-            UsuarioId    = operador.Id,
-            NegocioId    = negocioId,
-            Rol          = "operador",
-            InvitadoPor  = usuarioPropietarioId
+            UsuarioId   = usuario.Id,
+            NegocioId   = negocioId,
+            Rol         = request.Rol,
+            InvitadoPor = usuarioPropietarioId
         });
         await _db.SaveChangesAsync();
+
+        return new MiembroResponse
+        {
+            Id       = usuario.Id,
+            Nombre   = usuario.Nombre,
+            Correo   = usuario.Correo,
+            Rol      = request.Rol,
+            CreadoEn = DateTimeOffset.UtcNow
+        };
     }
 
-    public async Task RemoverMiembroAsync(long negocioId, long usuarioPropietarioId, long miembroId)
+    public async Task EliminarMiembroAsync(long negocioId, long usuarioPropietarioId, long miembroId)
     {
         await _acceso.VerificarPropietarioAsync(negocioId, usuarioPropietarioId);
 
         if (miembroId == usuarioPropietarioId)
-            throw new InvalidOperationException("El propietario no puede removerse a sí mismo.");
+            throw new InvalidOperationException("El propietario no puede eliminarse a sí mismo.");
 
         var relacion = await _db.UsuariosNegocios
             .FirstOrDefaultAsync(un => un.NegocioId == negocioId && un.UsuarioId == miembroId && un.EliminadoEn == null)
             ?? throw new KeyNotFoundException("El usuario no tiene acceso a este negocio.");
 
         relacion.EliminadoEn = DateTimeOffset.UtcNow;
+
+        var usuario = await _db.Usuarios.FindAsync(miembroId);
+        if (usuario is not null)
+            usuario.EliminadoEn = DateTimeOffset.UtcNow;
+
         await _db.SaveChangesAsync();
     }
 

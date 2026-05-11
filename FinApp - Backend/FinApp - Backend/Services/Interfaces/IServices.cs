@@ -24,8 +24,9 @@ public interface INegocioService
     Task<NegocioResponse> CrearAsync(long usuarioId, CrearNegocioRequest request);
     Task<NegocioResponse> ActualizarAsync(long negocioId, long usuarioId, ActualizarNegocioRequest request);
     Task EliminarAsync(long negocioId, long usuarioId);
-    Task InvitarOperadorAsync(long negocioId, long usuarioPropietarioId, InvitarOperadorRequest request);
-    Task RemoverMiembroAsync(long negocioId, long usuarioPropietarioId, long miembroId);
+    Task<List<MiembroResponse>> ObtenerMiembrosAsync(long negocioId, long usuarioId);
+    Task<MiembroResponse> CrearMiembroAsync(long negocioId, long usuarioPropietarioId, CrearMiembroRequest request);
+    Task EliminarMiembroAsync(long negocioId, long usuarioPropietarioId, long miembroId);
 }
 
 public interface IProductoService

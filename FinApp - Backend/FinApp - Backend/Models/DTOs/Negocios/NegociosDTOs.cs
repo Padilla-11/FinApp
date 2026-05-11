@@ -45,9 +45,31 @@ public class NegocioResponse
     public DateTimeOffset CreadoEn { get; set; }
 }
 
-public class InvitarOperadorRequest
+public class CrearMiembroRequest
 {
-    [Required]
-    [EmailAddress]
-    public string CorreoOperador { get; set; } = null!;
+    [Required(ErrorMessage = "El nombre es obligatorio")]
+    [MaxLength(200)]
+    public string Nombre { get; set; } = null!;
+
+    [Required(ErrorMessage = "El correo es obligatorio")]
+    [EmailAddress(ErrorMessage = "Correo inválido")]
+    [MaxLength(200)]
+    public string Correo { get; set; } = null!;
+
+    [Required(ErrorMessage = "La contraseña es obligatoria")]
+    [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+    public string Password { get; set; } = null!;
+
+    [Required(ErrorMessage = "El rol es obligatorio")]
+    [RegularExpression("^(propietario|operador)$", ErrorMessage = "Rol debe ser 'propietario' u 'operador'")]
+    public string Rol { get; set; } = null!;
+}
+
+public class MiembroResponse
+{
+    public long Id { get; set; }
+    public string Nombre { get; set; } = null!;
+    public string Correo { get; set; } = null!;
+    public string Rol { get; set; } = null!;
+    public DateTimeOffset CreadoEn { get; set; }
 }

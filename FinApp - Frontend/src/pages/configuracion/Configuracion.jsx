@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { negociosApi } from '../../api/negocios';
 import { productosApi } from '../../api/productos';
@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 export default function Configuracion() {
-  const { negocio, seleccionarNegocio } = useApp();
+  const { negocio, seleccionarNegocio, user } = useApp();
   const nid = negocio?.Id || negocio?.id;
 
   const [tab, setTab]               = useState('negocio');
@@ -19,6 +19,7 @@ export default function Configuracion() {
   const [costos, setCostos]         = useState([]);
   const [empleados, setEmpleados]   = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [miembros, setMiembros]     = useState([]);
   const [loading, setLoading]       = useState(true);
 
   // Negocio form
@@ -40,7 +41,7 @@ export default function Configuracion() {
   const [costoForm, setCostoForm] = useState({ nombre: '', valor: '', frecuencia: 'mensual' });
   const [empForm, setEmpForm]     = useState({ nombre: '', cargo: '', tipoPago: 'mensual', valorPago: '' });
   const [catForm, setCatForm]     = useState({ nombre: '' });
-  const [userForm, setUserForm]   = useState({ correo: '', rol: 'operador' });
+  const [userForm, setUserForm]   = useState({ nombre: '', correo: '', password: '', confirmar: '', rol: 'operador' });
   const [saving, setSaving]       = useState(false);
 
   useEffect(() => {
@@ -59,16 +60,18 @@ export default function Configuracion() {
   async function cargarTodo() {
     setLoading(true);
     try {
-      const [pRes, cRes, eRes, catRes] = await Promise.allSettled([
+      const [pRes, cRes, eRes, catRes, mRes] = await Promise.allSettled([
         productosApi.listar(nid),
         costosFijosApi.listar(nid),
         empleadosApi.listar(nid),
         categoriasGastosApi.listar(nid),
+        negociosApi.listarMiembros(nid),
       ]);
       if (pRes.status === 'fulfilled')   setProductos(pRes.value.data.Data || []);
       if (cRes.status === 'fulfilled')   setCostos(cRes.value.data.Data || []);
       if (eRes.status === 'fulfilled')   setEmpleados(eRes.value.data.Data || []);
       if (catRes.status === 'fulfilled') setCategorias(catRes.value.data.Data || []);
+      if (mRes.status === 'fulfilled')   setMiembros(mRes.value.data.Data || []);
     } finally {
       setLoading(false);
     }
@@ -228,14 +231,28 @@ export default function Configuracion() {
     } catch { toast.error('Error'); } finally { setSaving(false); }
   }
 
-  async function invitarUsuario() {
+  const usuarioActualId = user?.Id || user?.id;
+
+  async function registrarUsuario() {
+    if (!userForm.nombre) { toast.error('El nombre es requerido'); return; }
     if (!userForm.correo) { toast.error('El correo es requerido'); return; }
+    if (!userForm.password) { toast.error('La contraseña es requerida'); return; }
+    if (userForm.password.length < 6) { toast.error('La contraseña debe tener al menos 6 caracteres'); return; }
+    if (userForm.password !== userForm.confirmar) { toast.error('Las contraseñas no coinciden'); return; }
     setSaving(true);
     try {
-      await negociosApi.invitarMiembro(nid, { Correo: userForm.correo, Rol: userForm.rol });
-      setModalUser(false); setUserForm({ correo: '', rol: 'operador' });
-      toast.success('Invitación enviada');
+      await negociosApi.crearMiembro(nid, { Nombre: userForm.nombre, Correo: userForm.correo, Password: userForm.password, Rol: userForm.rol });
+      setModalUser(false); setUserForm({ nombre: '', correo: '', password: '', confirmar: '', rol: 'operador' });
+      cargarTodo(); toast.success('Usuario registrado exitosamente');
     } catch (err) { toast.error(err.response?.data?.Mensaje || 'Error'); } finally { setSaving(false); }
+  }
+
+  async function eliminarMiembro(miembroId) {
+    if (!confirm('¿Eliminar este usuario? Se desactivará su cuenta y perderá acceso al sistema.')) return;
+    try {
+      await negociosApi.eliminarMiembro(nid, miembroId);
+      cargarTodo(); toast.success('Usuario eliminado');
+    } catch (err) { toast.error(err.response?.data?.Mensaje || 'Error'); }
   }
 
   const diasOperativos = (negocio?.DiasOperacion || negocio?.diasOperacion || []).length || 6;
@@ -442,12 +459,34 @@ export default function Configuracion() {
 
       {/* TAB USUARIOS */}
       {tab === 'usuarios' && (
-        <div className="fo-card">
-          <div className="fo-card-header">
+        <div className="fo-card" style={{ padding: 0 }}>
+          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--fo-border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div className="fo-card-title">Usuarios con acceso</div>
-            <button className="btn btn-primary btn-sm" onClick={() => setModalUser(true)}>+ Invitar</button>
+            <button className="btn btn-primary btn-sm" onClick={() => setModalUser(true)}>+ Registrar usuario</button>
           </div>
-          <div style={{ color: 'var(--fo-text-muted)', fontSize: '.875rem', padding: '1rem 0' }}>Gestión de miembros disponible próximamente con detalles completos.</div>
+          {miembros.length === 0 ? <EmptyState icon="👥" text="No hay usuarios registrados en este negocio" /> : (
+            <div className="fo-table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
+              <table className="fo-table">
+                <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Registro</th><th></th></tr></thead>
+                <tbody>
+                  {miembros.map((m) => {
+                    const mid = m.Id || m.id;
+                    return (
+                      <tr key={mid}>
+                        <td style={{ fontWeight: 500 }}>{m.Nombre || m.nombre}</td>
+                        <td style={{ color: 'var(--fo-text-muted)' }}>{m.Correo || m.correo}</td>
+                        <td><span className={`badge ${(m.Rol || m.rol) === 'propietario' ? 'badge-info' : 'badge-neutral'}`}>{(m.Rol || m.rol) === 'propietario' ? 'Propietario' : 'Operador'}</span></td>
+                        <td className="mono" style={{ fontSize: '.8rem' }}>{new Date(m.CreadoEn || m.creadoEn).toLocaleDateString()}</td>
+                        <td>{(m.Rol || m.rol) !== 'propietario' && (mid !== usuarioActualId) && (
+                          <button className="btn btn-danger btn-sm" onClick={() => eliminarMiembro(mid)}>Eliminar</button>
+                        )}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -496,9 +535,15 @@ export default function Configuracion() {
         <div className="form-group" style={{ marginBottom: 0 }}><label className="label-text">Nombre <span className="required">*</span></label><input className="fo-input" placeholder="Ej: Publicidad" value={catForm.nombre} onChange={(e) => setCatForm({ nombre: e.target.value })} /></div>
       </Modal>
 
-      <Modal open={modalUser} onClose={() => setModalUser(false)} title="Invitar usuario"
-        footer={<><button className="btn btn-ghost" onClick={() => setModalUser(false)}>Cancelar</button><button className="btn btn-primary" onClick={invitarUsuario} disabled={saving}>{saving ? 'Enviando...' : 'Enviar invitación'}</button></>}>
+      <Modal open={modalUser} onClose={() => setModalUser(false)} title="Registrar usuario"
+        footer={<><button className="btn btn-ghost" onClick={() => setModalUser(false)}>Cancelar</button><button className="btn btn-primary" onClick={registrarUsuario} disabled={saving}>{saving ? 'Registrando...' : 'Registrar usuario'}</button></>}>
+        <div className="form-group"><label className="label-text">Nombre completo <span className="required">*</span></label><input className="fo-input" placeholder="Nombre del usuario" value={userForm.nombre} onChange={(e) => setUserForm((p) => ({ ...p, nombre: e.target.value }))} /></div>
         <div className="form-group"><label className="label-text">Correo electrónico <span className="required">*</span></label><input className="fo-input" type="email" placeholder="correo@ejemplo.com" value={userForm.correo} onChange={(e) => setUserForm((p) => ({ ...p, correo: e.target.value }))} /></div>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}><label className="label-text">Contraseña <span className="required">*</span></label><input className="fo-input" type="password" placeholder="Mín. 6 caracteres" value={userForm.password} onChange={(e) => setUserForm((p) => ({ ...p, password: e.target.value }))} /></div>
+          <div style={{ flex: 1 }}><label className="label-text">Confirmar <span className="required">*</span></label><input className="fo-input" type="password" placeholder="Repite la contraseña" value={userForm.confirmar} onChange={(e) => setUserForm((p) => ({ ...p, confirmar: e.target.value }))} /></div>
+        </div>
+        {userForm.password && userForm.confirmar && userForm.password !== userForm.confirmar && <div className="fo-hint" style={{ color: 'var(--fo-danger)' }}>Las contraseñas no coinciden</div>}
         <div className="form-group" style={{ marginBottom: 0 }}><label className="label-text">Rol</label>
           <select className="fo-input fo-select" value={userForm.rol} onChange={(e) => setUserForm((p) => ({ ...p, rol: e.target.value }))}>
             <option value="operador">Operador — Solo registra jornadas</option>

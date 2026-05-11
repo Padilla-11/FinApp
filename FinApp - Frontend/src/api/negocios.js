@@ -8,6 +8,7 @@ export const negociosApi = {
   crear: (data) => client.post(base(), data),
   actualizar: (id, data) => client.put(base(id), data),
   eliminar: (id) => client.delete(base(id)),
-  invitarMiembro: (id, data) => client.post(`${base(id)}/miembros`, data),
-  removerMiembro: (id, miembroId) => client.delete(`${base(id)}/miembros/${miembroId}`),
+  listarMiembros: (id) => client.get(`${base(id)}/miembros`),
+  crearMiembro: (id, data) => client.post(`${base(id)}/miembros`, data),
+  eliminarMiembro: (id, miembroId) => client.delete(`${base(id)}/miembros/${miembroId}`),
 };
