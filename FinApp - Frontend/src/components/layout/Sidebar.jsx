@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 
-const NAV = [
+const NAV_ITEMS = [
   { section: 'Principal' },
   { to: '/dashboard',   icon: '📊', label: 'Dashboard' },
   { to: '/jornada',     icon: '⏱️', label: 'Jornada activa' },
@@ -13,6 +13,8 @@ const NAV = [
   { section: 'Ajustes' },
   { to: '/configuracion', icon: '⚙️', label: 'Configuración' },
 ];
+
+const OCULTOS_OPERADOR = ['/simulador', '/analisis', '/configuracion'];
 
 export default function Sidebar() {
   const { user, negocio, rol, logout } = useApp();
@@ -28,6 +30,11 @@ export default function Sidebar() {
 
   const userName = user?.Nombre || user?.nombre || '';
   const userRole = negocio?.Rol || 'Propietario';
+  const esOperador = userRole === 'operador';
+
+  const NAV = esOperador
+    ? NAV_ITEMS.filter((i) => !i.to || !OCULTOS_OPERADOR.includes(i.to))
+    : NAV_ITEMS;
 
   function handleLogout() {
     logout();

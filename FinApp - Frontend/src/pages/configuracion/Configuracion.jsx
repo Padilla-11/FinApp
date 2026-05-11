@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { negociosApi } from '../../api/negocios';
 import { productosApi } from '../../api/productos';
@@ -11,7 +12,13 @@ import toast from 'react-hot-toast';
 const DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 export default function Configuracion() {
-  const { negocio, seleccionarNegocio, user } = useApp();
+  const { negocio, seleccionarNegocio, user, rol } = useApp();
+  const navigate = useNavigate();
+  const esOperador = rol === 'operador';
+
+  useEffect(() => {
+    if (esOperador) navigate('/dashboard');
+  }, [esOperador]);
   const nid = negocio?.Id || negocio?.id;
 
   const [tab, setTab]               = useState('negocio');

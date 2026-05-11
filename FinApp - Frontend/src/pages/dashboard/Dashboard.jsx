@@ -9,12 +9,13 @@ import { fmt, fmtPct, fmtFechaCorta, fmtHora } from '../../utils/format';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export default function Dashboard() {
-  const { negocio } = useApp();
+  const { negocio, rol } = useApp();
   const navigate = useNavigate();
   const [historial, setHistorial]   = useState([]);
   const [jornada, setJornada]       = useState(null);
   const [cuentas, setCuentas]       = useState([]);
   const [loading, setLoading]       = useState(true);
+  const esOperador = rol === 'operador';
 
   const nid = negocio?.Id || negocio?.id;
 
@@ -24,7 +25,7 @@ export default function Dashboard() {
       setLoading(true);
       try {
         const [hRes, jRes, cRes] = await Promise.allSettled([
-          cierresApi.historial(nid, 1, 30),
+          cierresApi.historial(nid, 1, esOperador ? 1 : 30),
           jornadasApi.obtenerActiva(nid),
           cuentasApi.listar(nid),
         ]);
@@ -37,12 +38,14 @@ export default function Dashboard() {
     })();
   }, [nid]);
 
-  // Calcular KPIs del mes
-  const mesActual = historial.filter((c) => {
+  // KPIs: operador ve solo su último cierre, propietario ve el mes
+  const datosVisibles = esOperador ? historial.slice(0, 1) : historial;
+
+  const mesActual = datosVisibles.filter((c) => {
     const fechaRef = c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn;
     const d = new Date(fechaRef);
     const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return esOperador ? true : (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear());
   });
 
   const totalIngresos  = mesActual.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
@@ -54,7 +57,7 @@ export default function Dashboard() {
     .reduce((s, c) => s + ((c.MontoTotal || 0) - (c.MontoCobrado || 0)), 0);
 
   // Datos para gráfica
-  const chartData = historial.slice(0, 14).reverse().map((c) => ({
+  const chartData = datosVisibles.slice(0, 14).reverse().map((c) => ({
     fecha: fmtFechaCorta(c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn),
     Ingresos: c.IngresosOperativos || c.ingresosOperativos || 0,
     Gastos: (c.GastosJornada || c.gastosJornada || 0) + (c.CostosFijosDia || c.costosFijosDia || 0) + (c.CostoVendido || c.costoVendido || 0),
@@ -64,7 +67,7 @@ export default function Dashboard() {
   if (jornada) alertas.push({ type: 'warning', icon: '🟡', title: 'Jornada abierta', text: `Tienes una jornada abierta desde las ${fmtHora(jornada.AbiertaEn || jornada.abiertaEn)}` });
   if (totalCobrar > 0) alertas.push({ type: 'info', icon: 'ℹ️', title: 'Cuentas por cobrar', text: `Tienes ${fmt(totalCobrar)} pendientes de cobro.`, link: '/cuentas' });
   const racha = mesActual.slice(-3);
-  if (racha.length >= 2 && racha.every((c) => (c.EstadoDia || c.estadoDia) === 'perdida')) alertas.push({ type: 'danger', icon: '🔴', title: 'Racha negativa', text: 'Llevas varios días consecutivos sin superar el punto de equilibrio.' });
+  if (!esOperador && racha.length >= 2 && racha.every((c) => (c.EstadoDia || c.estadoDia) === 'perdida')) alertas.push({ type: 'danger', icon: '🔴', title: 'Racha negativa', text: 'Llevas varios días consecutivos sin superar el punto de equilibrio.' });
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>

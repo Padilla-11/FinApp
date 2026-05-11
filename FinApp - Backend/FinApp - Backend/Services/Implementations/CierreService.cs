@@ -170,8 +170,15 @@ public class CierreService : ICierreService
     {
         await _acceso.VerificarAccesoAsync(negocioId, usuarioId);
 
-        return await _db.CierresJornada
-            .Where(c => c.NegocioId == negocioId)
+        var rol = await _acceso.ObtenerRolAsync(negocioId, usuarioId);
+
+        var query = _db.CierresJornada
+            .Where(c => c.NegocioId == negocioId);
+
+        if (rol == "operador")
+            query = query.Where(c => c.CerradoPor == usuarioId);
+
+        return await query
             .Include(c => c.Jornada)
             .OrderByDescending(c => c.CreadoEn)
             .Skip((pagina - 1) * tamano)
