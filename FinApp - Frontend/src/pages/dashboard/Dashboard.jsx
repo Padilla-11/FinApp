@@ -25,7 +25,7 @@ export default function Dashboard() {
       setLoading(true);
       try {
         const [hRes, jRes, cRes] = await Promise.allSettled([
-          cierresApi.historial(nid, 1, esOperador ? 1 : 30),
+          cierresApi.historial(nid, 1, 30),
           jornadasApi.obtenerActiva(nid),
           cuentasApi.listar(nid),
         ]);
@@ -38,14 +38,15 @@ export default function Dashboard() {
     })();
   }, [nid]);
 
-  // KPIs: operador ve solo su último cierre, propietario ve el mes
-  const datosVisibles = esOperador ? historial.slice(0, 1) : historial;
+  const totalCobrar = cuentas.filter((c) => ['pendiente','cobrado_parcial'].includes(c.Estado || c.estado))
+    .reduce((s, c) => s + ((c.MontoTotal || 0) - (c.MontoCobrado || 0)), 0);
 
-  const mesActual = datosVisibles.filter((c) => {
+  // ── PROPIETARIO ─────────────────────────────────────────────
+  const mesActual = historial.filter((c) => {
     const fechaRef = c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn;
     const d = new Date(fechaRef);
     const now = new Date();
-    return esOperador ? true : (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear());
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
 
   const totalIngresos  = mesActual.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
@@ -53,11 +54,17 @@ export default function Dashboard() {
   const margenProm     = mesActual.length ? mesActual.reduce((s, c) => s + (c.MargenGanancia || 0), 0) / mesActual.length : 0;
   const diasRentables  = mesActual.filter((c) => (c.EstadoDia || c.estadoDia) === 'rentable').length;
 
-  const totalCobrar = cuentas.filter((c) => ['pendiente','cobrado_parcial'].includes(c.Estado || c.estado))
-    .reduce((s, c) => s + ((c.MontoTotal || 0) - (c.MontoCobrado || 0)), 0);
+  // ── OPERADOR ────────────────────────────────────────────────
+  const ultimaJornada = historial[0] || null;
+  const jornadasEsteMes = historial.filter((c) => {
+    const d = new Date(c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const opDiasRentables = jornadasEsteMes.filter((c) => (c.EstadoDia || c.estadoDia) === 'rentable').length;
 
   // Datos para gráfica
-  const chartData = datosVisibles.slice(0, 14).reverse().map((c) => ({
+  const chartData = historial.slice(0, esOperador ? 7 : 14).reverse().map((c) => ({
     fecha: fmtFechaCorta(c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn),
     Ingresos: c.IngresosOperativos || c.ingresosOperativos || 0,
     Gastos: (c.GastosJornada || c.gastosJornada || 0) + (c.CostosFijosDia || c.costosFijosDia || 0) + (c.CostoVendido || c.costoVendido || 0),
@@ -104,10 +111,21 @@ export default function Dashboard() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-        <KpiCard label="Ingresos del mes" value={fmt(totalIngresos)} sub={`${mesActual.length} jornadas`} />
-        <KpiCard label="Utilidad neta" value={fmt(totalUtilidad)} type="accent" sub={`Margen: ${fmtPct(margenProm)}`} style={{ '--fo-kpi-val': 'var(--fo-accent-dark)' }} />
-        <KpiCard label="Días rentables" value={`${diasRentables} / ${mesActual.length}`} sub="Este mes" />
-        <KpiCard label="Cuentas por cobrar" value={fmt(totalCobrar)} type="warning" sub={`${cuentas.filter(c => ['pendiente','cobrado_parcial'].includes(c.Estado||c.estado)).length} clientes`} />
+        {esOperador ? (
+          <>
+            <KpiCard label="Última jornada" value={ultimaJornada ? fmtFechaCorta(ultimaJornada.FechaReferencia || ultimaJornada.fechaReferencia || ultimaJornada.CreadoEn || ultimaJornada.creadoEn) : '—'} sub={ultimaJornada ? `Ingresos: ${fmt(ultimaJornada.IngresosOperativos || 0)}` : 'Sin cierres'} />
+            <KpiCard label="Utilidad" value={ultimaJornada ? fmt(ultimaJornada.UtilidadNeta || 0) : '—'} type={ultimaJornada && (ultimaJornada.UtilidadNeta || 0) >= 0 ? 'accent' : 'danger'} sub={ultimaJornada ? `Margen: ${fmtPct(ultimaJornada.MargenGanancia || 0)}` : ''} />
+            <KpiCard label="Jornadas este mes" value={`${jornadasEsteMes.length}`} sub={jornadasEsteMes.length === 1 ? '1 cerrada' : `${jornadasEsteMes.length} cerradas`} />
+            <KpiCard label="Días rentables" value={jornadasEsteMes.length > 0 ? `${opDiasRentables} / ${jornadasEsteMes.length}` : '—'} sub={jornadasEsteMes.length > 0 ? `${Math.round(opDiasRentables / jornadasEsteMes.length * 100)}% del total` : ''} />
+          </>
+        ) : (
+          <>
+            <KpiCard label="Ingresos del mes" value={fmt(totalIngresos)} sub={`${mesActual.length} jornadas`} />
+            <KpiCard label="Utilidad neta" value={fmt(totalUtilidad)} type="accent" sub={`Margen: ${fmtPct(margenProm)}`} style={{ '--fo-kpi-val': 'var(--fo-accent-dark)' }} />
+            <KpiCard label="Días rentables" value={`${diasRentables} / ${mesActual.length}`} sub="Este mes" />
+            <KpiCard label="Cuentas por cobrar" value={fmt(totalCobrar)} type="warning" sub={`${cuentas.filter(c => ['pendiente','cobrado_parcial'].includes(c.Estado||c.estado)).length} clientes`} />
+          </>
+        )}
       </div>
 
       {/* Gráfica + Alertas */}
@@ -116,7 +134,7 @@ export default function Dashboard() {
           <div className="fo-card-header">
             <div>
               <div className="fo-card-title">Ingresos vs Gastos</div>
-              <div className="fo-card-subtitle">Últimos 14 cierres</div>
+              <div className="fo-card-subtitle">{esOperador ? 'Últimos 7 cierres' : 'Últimos 14 cierres'}</div>
             </div>
             <span className="badge badge-info">{new Date().toLocaleString('es-CO', { month: 'long', year: 'numeric' })}</span>
           </div>
