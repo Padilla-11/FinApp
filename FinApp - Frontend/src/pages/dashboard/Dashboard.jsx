@@ -183,7 +183,7 @@ export default function Dashboard() {
         ) : (
           <div className="fo-table-wrap" style={{ border: 'none', boxShadow: 'none' }}>
             <table className="fo-table">
-              <thead><tr><th>Fecha</th><th>Ingresos</th><th>Utilidad neta</th><th>Margen</th><th>Estado</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Ingresos</th><th>Utilidad neta</th><th>Margen</th><th>Estado</th><th>Cerrado por</th></tr></thead>
               <tbody>
                 {historial.slice(0, 5).map((c, i) => (
                   <tr key={i} style={{ cursor: 'pointer' }} onClick={() => navigate('/historial')}>
@@ -192,6 +192,7 @@ export default function Dashboard() {
                     <td className={`amount ${(c.UtilidadNeta || 0) >= 0 ? 'pos' : 'neg'}`}>{fmt(c.UtilidadNeta)}</td>
                     <td className="mono">{fmtPct(c.MargenGanancia)}</td>
                     <td><EstadoBadge estado={c.EstadoDia || c.estadoDia} /></td>
+                    <td style={{ fontSize: '.75rem', color: 'var(--fo-text-muted)' }}>{c.CerradoPorNombre || c.cerradoPorNombre || ''}</td>
                   </tr>
                 ))}
               </tbody>

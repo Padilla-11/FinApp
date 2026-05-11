@@ -82,5 +82,7 @@ public class HistorialCierreResponse
     public decimal UtilidadNeta { get; set; }
     public decimal MargenGanancia { get; set; }
     public string EstadoDia { get; set; } = null!;
+    public long CerradoPor { get; set; }
+    public string CerradoPorNombre { get; set; } = null!;
     public DateTimeOffset CreadoEn { get; set; }
 }

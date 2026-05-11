@@ -18,7 +18,7 @@ public class CierreService : ICierreService
     public async Task<CierreResponse> ConfirmarCierreAsync(
         long negocioId, long jornadaId, long usuarioId, ConfirmarCierreRequest request)
     {
-        await _acceso.VerificarPropietarioAsync(negocioId, usuarioId);
+        await _acceso.VerificarAccesoAsync(negocioId, usuarioId);
 
         var jornada = await _db.Jornadas
             .Include(j => j.Movimientos)
@@ -175,6 +175,7 @@ public class CierreService : ICierreService
 
         return await query
             .Include(c => c.Jornada)
+            .Include(c => c.CerradoPorUsuario)
             .OrderByDescending(c => c.CreadoEn)
             .Skip((pagina - 1) * tamano)
             .Take(tamano)
@@ -188,6 +189,8 @@ public class CierreService : ICierreService
                 UtilidadNeta = c.UtilidadNeta,
                 MargenGanancia = c.MargenGanancia,
                 EstadoDia = c.EstadoDia,
+                CerradoPor = c.CerradoPor,
+                CerradoPorNombre = c.CerradoPorUsuario.Nombre,
                 CreadoEn = c.CreadoEn
             })
             .ToListAsync();

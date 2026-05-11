@@ -88,32 +88,34 @@ export default function Historial() {
                   <th>Margen</th>
                   <th>Dif. caja</th>
                   <th>Estado</th>
+                  <th>Cerrado por</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {lista.map((c, i) => {
-                  const estado    = c.EstadoDia    || c.estadoDia;
-                  const ingresos  = c.IngresosOperativos || 0;
-                  const utilidad  = c.UtilidadNeta || 0;
-                  const margen    = c.MargenGanancia || 0;
-                  const diffCaja  = c.DiferenciaCaja || 0;
-                  const fecha     = c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn;
-                  return (
-                    <tr key={i} style={{ cursor: 'pointer' }}>
-                      <td style={{ fontWeight: 500 }}>{fmtFechaCorta(fecha)}</td>
-                      <td className="amount">{fmt(ingresos)}</td>
-                      <td className="amount neg">{fmt(c.CostoVendido || 0)}</td>
-                      <td className={`amount ${utilidad >= 0 ? 'pos' : 'neg'}`}>{fmt(utilidad)}</td>
-                      <td className="mono">{fmtPct(margen)}</td>
-                      <td className={`mono ${diffCaja >= 0 ? '' : 'neg'}`}>{diffCaja >= 0 ? '+' : ''}{fmt(diffCaja)}</td>
-                      <td><EstadoBadge estado={estado} /></td>
-                      <td>
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/historial/${c.Id || c.id}`)}>Ver →</button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                  {lista.map((c, i) => {
+                    const estado    = c.EstadoDia    || c.estadoDia;
+                    const ingresos  = c.IngresosOperativos || 0;
+                    const utilidad  = c.UtilidadNeta || 0;
+                    const margen    = c.MargenGanancia || 0;
+                    const diffCaja  = c.DiferenciaCaja || 0;
+                    const fecha     = c.FechaReferencia || c.fechaReferencia || c.CreadoEn || c.creadoEn;
+                    return (
+                      <tr key={i} style={{ cursor: 'pointer' }}>
+                        <td style={{ fontWeight: 500 }}>{fmtFechaCorta(fecha)}</td>
+                        <td className="amount">{fmt(ingresos)}</td>
+                        <td className="amount neg">{fmt(c.CostoVendido || 0)}</td>
+                        <td className={`amount ${utilidad >= 0 ? 'pos' : 'neg'}`}>{fmt(utilidad)}</td>
+                        <td className="mono">{fmtPct(margen)}</td>
+                        <td className={`mono ${diffCaja >= 0 ? '' : 'neg'}`}>{diffCaja >= 0 ? '+' : ''}{fmt(diffCaja)}</td>
+                        <td><EstadoBadge estado={estado} /></td>
+                        <td style={{ fontSize: '.75rem', color: 'var(--fo-text-muted)' }}>{c.CerradoPorNombre || c.cerradoPorNombre || ''}</td>
+                        <td>
+                          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/historial/${c.Id || c.id}`)}>Ver →</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
