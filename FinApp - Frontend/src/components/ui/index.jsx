@@ -32,7 +32,7 @@ export function Alert({ type = 'info', icon, iconComponent, title, children }) {
       {icon && !IconComp && <span className="alert-icon">{icon}</span>}
       <div className="alert-text">
         {title && <div className="alert-title">{title}</div>}
-        {children}
+        <span className="alert-body">{children}</span>
       </div>
     </div>
   );

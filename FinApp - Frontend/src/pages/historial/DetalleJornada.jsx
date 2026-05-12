@@ -186,7 +186,7 @@ export default function DetalleJornada() {
                     <tbody>
                       {(cierre.Conteos || []).map((c, i) => (
                         <tr key={i}>
-                          <td>{c.ProductoNombre || `Producto ${c.ProductoId}`}</td>
+                          <td>{c.NombreProducto || `Producto ${c.ProductoId}`}</td>
                           <td className="mono">{c.UnidadesVendidas}</td>
                           <td className="mono">{fmt(c.PrecioVenta)}</td>
                           <td className="mono">{fmt(c.CostoUnitario)}</td>
