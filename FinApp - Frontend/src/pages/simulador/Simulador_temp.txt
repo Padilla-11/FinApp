@@ -1,0 +1,29 @@
+  // Cargar estadísticas reales del negocio
+  useEffect(() => {
+    if (!nid) return;
+    setCargandoStats(true);
+    simuladorApi.obtenerEstadisticas(nid)
+      .then((r) => {
+        const stats = r.data?.Data;
+        if (stats) {
+          setDatosReales(stats);
+          // Calcular sliders para que variación inicial sea 0
+          const volumenCalc = stats.PrecioPromedio > 0 
+            ? Math.round(stats.IngresosDiarios / stats.PrecioPromedio) 
+            : VARS_DEFAULT.volumen;
+          const costoCalc = volumenCalc > 0 
+            ? Math.round(stats.CostoVendido / volumenCalc / 50) * 50 
+            : VARS_DEFAULT.costo;
+          const nuevosValores = {
+            precio: stats.PrecioPromedio > 0 ? Math.round(stats.PrecioPromedio / 100) * 100 : VARS_DEFAULT.precio,
+            costo: costoCalc,
+            volumen: volumenCalc,
+            fijos: stats.CostosFijosMensuales > 0 ? Math.round(stats.CostosFijosMensuales / 1000) * 1000 : VARS_DEFAULT.fijos,
+            dias: stats.DiasOperativos > 0 ? stats.DiasOperativos : VARS_DEFAULT.dias,
+          };
+          setVars(nuevosValores);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCargandoStats(false));
+  }, [nid]);

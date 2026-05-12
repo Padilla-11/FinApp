@@ -110,6 +110,92 @@ public class SimuladorService : ISimuladorService
         await _db.SaveChangesAsync();
     }
 
+    public async Task<EstadisticasSimuladorResponse> ObtenerEstadisticasAsync(long negocioId, long usuarioId)
+    {
+        await _acceso.VerificarAccesoAsync(negocioId, usuarioId);
+
+        // Obtener promedios de productos activos
+        var productos = await _db.Productos
+            .Where(p => p.NegocioId == negocioId && p.Activo && p.EliminadoEn == null)
+            .ToListAsync();
+
+        var precioPromedio = productos.Count > 0 ? productos.Average(p => (double)p.PrecioVenta) : 0;
+        var costoPromedio = productos.Count > 0 ? productos.Average(p => (double)p.CostoUnitario) : 0;
+
+        // Volumen promedio diario: considerar TODOS los cierres del mes actual
+        var ahora = DateTime.UtcNow;
+        var inicioMes = new DateOnly(ahora.Year, ahora.Month, 1);
+        var finMes = new DateOnly(ahora.Year, ahora.Month, DateTime.DaysInMonth(ahora.Year, ahora.Month));
+        var cierres = await _db.CierresJornada
+            .Where(c => c.NegocioId == negocioId && c.Jornada.FechaReferencia >= inicioMes && c.Jornada.FechaReferencia <= finMes)
+            .Include(c => c.Conteos)
+            .Include(c => c.Jornada)
+            .ToListAsync();
+
+        var volumenesDiarios = cierres.Select(c => {
+            if (c.ConteoRealizado && c.Conteos?.Any() == true)
+            {
+                return (double)c.Conteos.Sum(ct => ct.UnidadesVendidas);
+            }
+            else
+            {
+                return precioPromedio > 0
+                    ? (double)(c.IngresosOperativos / (decimal)precioPromedio)
+                    : 0;
+            }
+        }).ToList();
+
+        var volumenPromedio = volumenesDiarios.Count > 0 ? volumenesDiarios.Average() : 0;
+
+        // Días operativos del negocio
+        var negocio = await _db.Negocios
+            .FirstOrDefaultAsync(n => n.Id == negocioId)
+            ?? throw new KeyNotFoundException("Negocio no encontrado.");
+
+        var diasOperativos = negocio.DiasOperacion?.Length ?? 6;
+
+        // Costos fijos diarios: usar EquivalenteDiario ya calculado (considera días operativos)
+        var costosFijosDiarios = await _db.CostosFijos
+            .Where(c => c.NegocioId == negocioId && c.EliminadoEn == null)
+            .SumAsync(c => c.EquivalenteDiario);
+
+        // Nómina diaria: usar CostoDiario ya calculado (considera días operativos)
+        var nominaDiaria = await _db.Empleados
+            .Where(e => e.NegocioId == negocioId && e.EliminadoEn == null)
+            .SumAsync(e => e.CostoDiario);
+
+        // Costos totales
+        var costosTotalesDiarios = costosFijosDiarios + nominaDiaria;
+        var costosTotalesMensuales = costosTotalesDiarios * diasOperativos * 4.33m;
+
+        // Obtener promedios reales del mes actual
+        var promedios = await CalcularPromediosBaseAsync(negocioId, inicioMes, finMes);
+
+        return new EstadisticasSimuladorResponse
+        {
+            PrecioPromedio = (decimal)precioPromedio,
+            CostoPromedio = (decimal)costoPromedio,
+            VolumenPromedioDiario = (decimal)volumenPromedio,
+            CostosFijosMensuales = costosTotalesMensuales,
+            DiasOperativos = diasOperativos,
+
+            // Indicadores reales
+            IngresosDiarios = promedios.IngresosDiarios,
+            CostoVendido = promedios.IngresosDiarios * promedios.CostoVendidoPct,
+            CostosFijosDiarios = costosTotalesDiarios,
+            GastosJornada = promedios.GastosDiarios,
+            UtilidadNeta = promedios.UtilidadNeta,
+            MargenGanancia = promedios.Margen,
+            PuntoEquilibrio = promedios.IngresosDiarios > 0 && (promedios.IngresosDiarios - promedios.IngresosDiarios * promedios.CostoVendidoPct) > 0
+                ? costosTotalesDiarios / ((promedios.IngresosDiarios - promedios.IngresosDiarios * promedios.CostoVendidoPct) / promedios.IngresosDiarios)
+                : 0,
+            DiasConData = await _db.CierresJornada
+                .CountAsync(c => c.NegocioId == negocioId
+                    && c.Jornada.FechaReferencia >= inicioMes
+                    && c.Jornada.FechaReferencia <= finMes)
+        };
+    }
+
     // ── Lógica de simulación ────────────────────────────────────────────
 
     private record PromedioBase(

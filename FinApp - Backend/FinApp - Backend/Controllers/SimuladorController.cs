@@ -61,4 +61,12 @@ public class SimuladorController : ControllerBase
         await _svc.EliminarEscenarioAsync(negocioId, escenarioId, UsuarioId);
         return Ok(ApiResponse<object>.Ok(null!, "Escenario eliminado."));
     }
+
+    /// <summary>Obtener estadísticas reales del negocio para el simulador</summary>
+    [HttpGet("estadisticas")]
+    public async Task<ActionResult<ApiResponse<EstadisticasSimuladorResponse>>> ObtenerEstadisticas(long negocioId)
+    {
+        var data = await _svc.ObtenerEstadisticasAsync(negocioId, UsuarioId);
+        return Ok(ApiResponse<EstadisticasSimuladorResponse>.Ok(data));
+    }
 }

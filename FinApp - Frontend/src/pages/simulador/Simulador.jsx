@@ -33,8 +33,48 @@ export default function Simulador() {
   const [modalGuardar, setModalGuardar] = useState(false);
   const [nombreEsc, setNombreEsc]       = useState('');
   const [saving, setSaving]             = useState(false);
+  const [datosReales, setDatosReales]   = useState(null);
 
-  const actual   = calcularMetricas(VARS_DEFAULT);
+  // Cargar estadísticas reales del negocio
+  useEffect(() => {
+    if (!nid) return;
+    simuladorApi.obtenerEstadisticas(nid)
+      .then((r) => {
+        const stats = r.data?.Data;
+        if (stats) {
+          setDatosReales(stats);
+          // Calcular sliders para que variación inicial sea 0
+          const volumenCalc = stats.PrecioPromedio > 0 
+            ? Math.round(stats.IngresosDiarios / stats.PrecioPromedio) 
+            : VARS_DEFAULT.volumen;
+          const costoCalc = volumenCalc > 0 
+            ? Math.round(stats.CostoVendido / volumenCalc / 50) * 50 
+            : VARS_DEFAULT.costo;
+          // Costos fijos mensuales incluyen gastos de jornada para que coincida con UtilidadNeta
+          const fijosConGastosDiarios = (stats.CostosFijosDiarios || 0) + (stats.GastosJornada || 0);
+          const fijosConGastosMensuales = fijosConGastosDiarios * (stats.DiasOperativos || 6) * 4.33;
+          const nuevosValores = {
+            precio: stats.PrecioPromedio > 0 ? Math.round(stats.PrecioPromedio / 100) * 100 : VARS_DEFAULT.precio,
+            costo: costoCalc,
+            volumen: volumenCalc,
+            fijos: fijosConGastosMensuales > 0 ? Math.round(fijosConGastosMensuales / 1000) * 1000 : VARS_DEFAULT.fijos,
+            dias: stats.DiasOperativos > 0 ? stats.DiasOperativos : VARS_DEFAULT.dias,
+          };
+          setVars(nuevosValores);
+        }
+      })
+      .catch(() => {});
+  }, [nid]);
+
+  // Valores "Actual" vienen directamente del backend (promedios reales de cierres)
+  const actual = datosReales ? {
+    ingresosDia: datosReales.IngresosDiarios || 0,
+    costoDia: datosReales.CostoVendido || 0,
+    fijosDia: datosReales.CostosFijosDiarios || 0,
+    utilidadDia: datosReales.UtilidadNeta || 0,
+    margen: datosReales.MargenGanancia || 0,
+    equilibrio: datosReales.PuntoEquilibrio || 0,
+  } : calcularMetricas(VARS_DEFAULT);
   const simulado = calcularMetricas(vars);
 
   useEffect(() => {
@@ -44,7 +84,27 @@ export default function Simulador() {
       .catch(() => {});
   }, [nid]);
 
-  function resetVariables() { setVars(VARS_DEFAULT); }
+  function resetVariables() {
+    if (datosReales) {
+      const volumenCalc = datosReales.PrecioPromedio > 0 
+        ? Math.round(datosReales.IngresosDiarios / datosReales.PrecioPromedio) 
+        : VARS_DEFAULT.volumen;
+      const costoCalc = volumenCalc > 0 
+        ? Math.round(datosReales.CostoVendido / volumenCalc / 50) * 50 
+        : VARS_DEFAULT.costo;
+      const fijosConGastosDiarios = (datosReales.CostosFijosDiarios || 0) + (datosReales.GastosJornada || 0);
+      const fijosConGastosMensuales = fijosConGastosDiarios * (datosReales.DiasOperativos || 6) * 4.33;
+      setVars({
+        precio: datosReales.PrecioPromedio > 0 ? Math.round(datosReales.PrecioPromedio / 100) * 100 : VARS_DEFAULT.precio,
+        costo: costoCalc,
+        volumen: volumenCalc,
+        fijos: fijosConGastosMensuales > 0 ? Math.round(fijosConGastosMensuales / 1000) * 1000 : VARS_DEFAULT.fijos,
+        dias: datosReales.DiasOperativos > 0 ? datosReales.DiasOperativos : VARS_DEFAULT.dias,
+      });
+    } else {
+      setVars(VARS_DEFAULT);
+    }
+  }
 
   function cargarEscenario(esc) {
     if (esc === 'base') { resetVariables(); return; }
@@ -56,14 +116,16 @@ export default function Simulador() {
     if (!nombreEsc.trim()) { toast.error('Ingresa un nombre para el escenario'); return; }
     setSaving(true);
     try {
+      const hoy = new Date();
+      const hace30Dias = new Date(hoy.getTime() - 30 * 86400000);
       await simuladorApi.guardarEscenario(nid, {
         Nombre: nombreEsc,
-        PeriodoBaseInicio: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
-        PeriodoBaseFin: new Date().toISOString().slice(0, 10),
-        IngresosDiariosActual: actual.ingresosDia,
-        UtilidadNetaActual: actual.utilidadDia,
-        MargenActual: actual.margen,
-        EquilibrioActual: actual.equilibrio,
+        PeriodoBaseInicio: hace30Dias.toISOString().slice(0, 10),
+        PeriodoBaseFin: hoy.toISOString().slice(0, 10),
+        IngresosDiariosActual: datosReales?.IngresosDiarios || actual.ingresosDia,
+        UtilidadNetaActual: datosReales?.UtilidadNeta || actual.utilidadDia,
+        MargenActual: datosReales?.MargenGanancia || actual.margen,
+        EquilibrioActual: datosReales?.PuntoEquilibrio || actual.equilibrio,
         IngresosDiariosSimulado: simulado.ingresosDia,
         UtilidadNetaSimulado: simulado.utilidadDia,
         MargenSimulado: simulado.margen,
@@ -97,7 +159,8 @@ export default function Simulador() {
     const partes = [];
     if (Math.abs(diferenciaUtil) > 100) partes.push(`La utilidad diaria ${diferenciaUtil > 0 ? 'aumentaría' : 'disminuiría'} en ${fmt(Math.abs(diferenciaUtil))}`);
     if (Math.abs(diferenciaMargen) > 0.5) partes.push(`el margen ${diferenciaMargen > 0 ? 'mejoraría' : 'empeoraría'} ${Math.abs(diferenciaMargen).toFixed(1)} puntos porcentuales`);
-    if (vars.dias !== VARS_DEFAULT.dias) partes.push(`operando ${vars.dias} días/semana (~${Math.round(vars.dias * 4.33)} días/mes)`);
+    const diasBase = datosReales?.DiasOperativos || VARS_DEFAULT.dias;
+    if (vars.dias !== diasBase) partes.push(`operando ${vars.dias} días/semana (~${Math.round(vars.dias * 4.33)} días/mes)`);
     if (partes.length === 0) return 'Ajusta las variables para ver el impacto en tu negocio.';
     return `Con este escenario, ${partes.join(', ')}.`;
   }
@@ -186,7 +249,8 @@ export default function Simulador() {
                 {ROWS.map((row, i) => {
                   const diff = row.sim - row.actual;
                   const pct  = row.actual !== 0 ? (diff / Math.abs(row.actual)) * 100 : 0;
-                  const isBetter = row.label.includes('Costo') ? diff < 0 : diff > 0;
+                  const isInverted = row.label.includes('Costo') || row.label.includes('Punto');
+                  const isBetter = isInverted ? diff < 0 : diff > 0;
                   return (
                     <tr key={i}>
                       <td style={{ padding: '.625rem 1rem', borderBottom: '1px solid var(--fo-border-light)', color: 'var(--fo-text-secondary)', fontSize: '.8rem' }}>{row.label}</td>

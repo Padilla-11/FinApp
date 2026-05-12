@@ -38,4 +38,5 @@ export const simuladorApi = {
   preview: (nid, data) => client.post(`/api/negocios/${nid}/simulador/preview`, data),
   guardarEscenario: (nid, data) => client.post(`/api/negocios/${nid}/simulador/escenarios`, data),
   listarEscenarios: (nid) => client.get(`/api/negocios/${nid}/simulador/escenarios`),
+  obtenerEstadisticas: (nid) => client.get(`/api/negocios/${nid}/simulador/estadisticas`),
 };

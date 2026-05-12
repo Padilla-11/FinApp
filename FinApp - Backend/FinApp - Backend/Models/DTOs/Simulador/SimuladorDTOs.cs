@@ -77,3 +77,22 @@ public class PreviewSimulacionResponse
     public decimal VariacionIngresos { get; set; }
     public decimal VariacionUtilidad { get; set; }
 }
+
+public class EstadisticasSimuladorResponse
+{
+    public decimal PrecioPromedio { get; set; }
+    public decimal CostoPromedio { get; set; }
+    public decimal VolumenPromedioDiario { get; set; }
+    public decimal CostosFijosMensuales { get; set; }
+    public int DiasOperativos { get; set; }
+
+    // Indicadores reales (promedios últimos 30 días de cierres)
+    public decimal IngresosDiarios { get; set; }
+    public decimal CostoVendido { get; set; }
+    public decimal CostosFijosDiarios { get; set; }
+    public decimal GastosJornada { get; set; }
+    public decimal UtilidadNeta { get; set; }
+    public decimal MargenGanancia { get; set; }
+    public decimal PuntoEquilibrio { get; set; }
+    public int DiasConData { get; set; }
+}

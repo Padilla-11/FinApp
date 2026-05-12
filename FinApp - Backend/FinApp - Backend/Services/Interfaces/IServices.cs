@@ -96,6 +96,7 @@ public interface ISimuladorService
     Task<List<EscenarioResponse>> ListarEscenariosAsync(long negocioId, long usuarioId);
     Task<EscenarioResponse> ObtenerEscenarioAsync(long negocioId, long escenarioId, long usuarioId);
     Task EliminarEscenarioAsync(long negocioId, long escenarioId, long usuarioId);
+    Task<EstadisticasSimuladorResponse> ObtenerEstadisticasAsync(long negocioId, long usuarioId);
 }
 
 public interface IAccesoService
