@@ -42,7 +42,7 @@ public class VentaCreditoService : IVentaCreditoService
 
         return await _db.VentasCredito
             .Where(v => v.NegocioId == negocioId
-                     && (v.Estado == "pendiente" || v.Estado == "cobrado_parcial"))
+                     && (v.Estado == "pendiente" || v.Estado == "cobrado_parcial" || v.Estado == "cobrado"))
             .Include(v => v.Cobros)
             .OrderByDescending(v => v.CreadoEn)
             .Select(v => MapearRespuesta(v, v.Cobros.ToList()))

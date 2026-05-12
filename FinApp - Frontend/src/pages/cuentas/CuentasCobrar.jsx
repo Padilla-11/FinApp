@@ -40,7 +40,14 @@ export default function CuentasCobrar() {
     }
   }
 
-  const lista = filtro ? cuentas.filter((c) => (c.Estado || c.estado) === filtro) : cuentas;
+  const lista = filtro
+    ? cuentas.filter((c) => {
+        const est = c.Estado || c.estado;
+        return filtro === 'pendiente'
+          ? ['pendiente', 'cobrado_parcial'].includes(est)
+          : est === filtro;
+      })
+    : cuentas;
 
   const pendientes = cuentas.filter((c) => ['pendiente', 'cobrado_parcial'].includes(c.Estado || c.estado));
   const totalPendiente = pendientes.reduce((s, c) => s + ((c.MontoTotal || 0) - (c.MontoCobrado || 0)), 0);
@@ -121,7 +128,6 @@ export default function CuentasCobrar() {
           <select className="fo-input fo-select" style={{ width: 'auto' }} value={filtro} onChange={(e) => setFiltro(e.target.value)}>
             <option value="">Todos los estados</option>
             <option value="pendiente">Pendientes</option>
-            <option value="cobrado_parcial">Cobro parcial</option>
             <option value="cobrado">Cobradas</option>
           </select>
         </div>
