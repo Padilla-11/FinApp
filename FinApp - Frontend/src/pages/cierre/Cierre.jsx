@@ -8,8 +8,7 @@ import { costosFijosApi, empleadosApi } from '../../api/otros';
 import { Alert, SummaryRow, DayResult } from '../../components/ui/index';
 import { fmt, fmtPct, fmtFecha } from '../../utils/format';
 import {
-  CheckCircleIcon, XCircleIcon, ScaleIcon, ExclamationTriangleIcon,
-  BanknotesIcon, InformationCircleIcon, ClipboardDocumentListIcon,
+  CheckCircleIcon, XCircleIcon, ScaleIcon,
 } from '@heroicons/react/20/solid';
 import toast from 'react-hot-toast';
 
@@ -133,17 +132,17 @@ export default function Cierre() {
   // Categorías de diferencia de caja
   const diferenciaPorcentaje = Math.abs(diferencia);
   let categoriaDiferencia = 'cuadra';
-  let AlertIconComp = CheckCircleIcon;
+
   let alertColor = 'var(--fo-success-lt)';
   let alertBorder = '#a8dfc4';
   if (diferenciaPorcentaje >= 5000 && diferenciaPorcentaje < 30000) {
     categoriaDiferencia = 'revisar';
-    AlertIconComp = ExclamationTriangleIcon;
+
     alertColor = 'var(--fo-warning-lt)';
     alertBorder = '#ffd89b';
   } else if (diferenciaPorcentaje >= 30000) {
     categoriaDiferencia = 'alta';
-    AlertIconComp = XCircleIcon;
+
     alertColor = 'var(--fo-danger-lt)';
     alertBorder = '#f5b8b8';
   }
@@ -218,13 +217,13 @@ export default function Cierre() {
 
       {/* PASO 1: Conteo */}
       {paso === 1 && (
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-          <div className="fo-card">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', alignItems: 'start' }}>
+          <div className="fo-card" style={{ overflow: 'hidden' }}>
             <div className="fo-card-header">
               <div><div className="fo-card-title">Conteo de productos vendidos</div><div className="fo-card-subtitle">Ingresa las unidades vendidas hoy</div></div>
               <span className="badge badge-info">Recomendado</span>
             </div>
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
               <table className="fo-table" style={{ minWidth: 480 }}>
                 <thead><tr><th>Producto</th><th>Precio</th><th>Costo</th><th style={{ textAlign: 'center' }}>Unidades</th><th style={{ textAlign: 'right' }}>Subtotal</th></tr></thead>
                 <tbody>
@@ -277,13 +276,13 @@ export default function Cierre() {
       {paso === 2 && (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div className="fo-card" style={{ padding: '2.5rem 2rem', textAlign: 'center', maxWidth: 440, width: '100%' }}>
-            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><BanknotesIcon style={{ width: 40, height: 40 }} /></div>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center', fontSize: '2.5rem' }}>💰</div>
             <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '.375rem' }}>¿Cuánto hay en caja ahora?</div>
             <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.75rem' }}>Cuenta el efectivo físico antes de cerrar</div>
             <div style={{ display: 'flex', alignItems: 'center', border: '2px solid var(--fo-border)', borderRadius: 12, maxWidth: 300, margin: '0 auto', overflow: 'hidden' }}>
               <div style={{ padding: '1rem 1.125rem', background: 'var(--fo-surface)', fontSize: '1.2rem', fontWeight: 600, color: 'var(--fo-primary)', borderRight: '2px solid var(--fo-border)' }}>$</div>
                <input type="text" inputMode="decimal" placeholder="0" value={cajaFinal} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setCajaFinal(v); }}
-                style={{ flex: 1, border: 'none', outline: 'none', fontSize: '1.5rem', fontFamily: 'var(--fo-font-mono)', textAlign: 'right', padding: '1rem', background: 'transparent' }} />
+                 style={{ flex: 1, width: '100%', minWidth: 0, border: 'none', outline: 'none', fontSize: '1.5rem', fontFamily: 'var(--fo-font-mono)', textAlign: 'right', padding: '1rem', background: 'transparent' }} />
             </div>
             <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
               {hayConteo ? (
@@ -371,7 +370,9 @@ export default function Cierre() {
                   <div style={{ fontFamily: 'var(--fo-font-mono)', fontSize: '1.5rem', fontWeight: 500 }}>{fmt(parseFloat(cajaFinal || 0))}</div>
                 </div>
                 <div style={{ borderRadius: 12, padding: '1.125rem', textAlign: 'center', border: '1.5px solid', background: alertColor, borderColor: alertBorder }}>
-                  <div style={{ marginBottom: '.375rem', display: 'flex', justifyContent: 'center' }}><AlertIconComp style={{ width: 24, height: 24 }} /></div>
+                  <div style={{ marginBottom: '.375rem', display: 'flex', justifyContent: 'center', fontSize: '1.5rem' }}>
+                  {categoriaDiferencia === 'cuadra' ? '✅' : categoriaDiferencia === 'revisar' ? '⚠️' : '❌'}
+                </div>
                   <div style={{ fontSize: '.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fo-text-muted)', marginBottom: '.375rem' }}>Diferencia</div>
                   <div style={{ fontFamily: 'var(--fo-font-mono)', fontSize: '1.4rem', fontWeight: 500, color: diferencia >= 0 ? 'var(--fo-accent-dark)' : 'var(--fo-danger)' }}>{diferencia >= 0 ? '+' : ''}{fmt(diferencia)}</div>
                   <div style={{ fontSize: '.775rem', marginTop: '.375rem', color: 'var(--fo-text-secondary)' }}>
@@ -388,7 +389,7 @@ export default function Cierre() {
         // MOSTRAR MENSAJE INFORMATIVO CUANDO NO HAY CONTEO
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div className="fo-card" style={{ maxWidth: 500, width: '100%', textAlign: 'center' }}>
-            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><InformationCircleIcon style={{ width: 40, height: 40 }} /></div>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center', fontSize: '2.5rem' }}>ℹ️</div>
             <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '.5rem' }}>Cálculo de ingresos operativos</div>
             <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.5rem' }}>
               Como omitiste el conteo, los ingresos operativos se calculan automáticamente desde tu caja final:
@@ -427,7 +428,7 @@ export default function Cierre() {
               <span className={`badge ${hayConteo ? 'badge-success' : 'badge-neutral'}`}>{hayConteo ? 'Con conteo' : 'Estimado'}</span>
             </div>
             <SummaryRow label="Ingresos operativos" value={fmt(ingresosOperativos)} />
-            <SummaryRow label="Costo de lo vendido (promedio)" value={fmt(costoVendido)} cls="s-neg" />
+            <SummaryRow label="Costo de lo vendido" value={fmt(costoVendido)} cls="s-neg" />
             <SummaryRow label="Utilidad bruta" value={fmt(utilidadBruta)} cls="s-pos highlight" />
             <hr className="fo-divider" style={{ margin: '.5rem 0' }} />
             <SummaryRow label="Gastos de la jornada" value={fmt(gastosJornada)} cls="s-neg" />
@@ -477,40 +478,13 @@ export default function Cierre() {
       {paso === 5 && (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div className="fo-card" style={{ padding: '2rem', textAlign: 'center', maxWidth: 520, width: '100%' }}>
-            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><ClipboardDocumentListIcon style={{ width: 40, height: 40 }} /></div>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center', fontSize: '2.5rem' }}>📋</div>
             <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '.375rem' }}>¿Confirmar el cierre?</div>
             <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.75rem' }}>Una vez cerrada la jornada solo puede modificarse con justificación registrada en auditoría.</div>
             
-            {/* Alertas si hay problemas */}
-            {!conteoRealizado && (
-              <Alert type="info" style={{ marginBottom: '1rem' }}>
-                <span style={{ fontSize: '.8rem' }}>El conteo fue omitido. Los indicadores son <strong>estimados</strong> basados en tus movimientos registrados.</span>
-              </Alert>
-            )}
-            {categoriaDiferencia === 'revisar' && (
-              <Alert type="warning" style={{ marginBottom: '1rem' }}>
-                <span style={{ fontSize: '.8rem' }}>Hay diferencia moderada de caja. Revisa tus movimientos antes de confirmar.</span>
-              </Alert>
-            )}
-            {categoriaDiferencia === 'alta' && (
-              <Alert type="danger" style={{ marginBottom: '1rem' }}>
-                <span style={{ fontSize: '.8rem' }}>Hay diferencia alta de caja ({fmt(Math.abs(diferencia))}). Investigar antes de confirmar.</span>
-              </Alert>
-            )}
-            {categoriaDiferencia === 'revisar' && (
-              <Alert type="warning" icon="⚠️" style={{ marginBottom: '1rem' }}>
-                <span style={{ fontSize: '.8rem' }}>Hay diferencia moderada de caja. Revisa tus movimientos antes de confirmar.</span>
-              </Alert>
-            )}
-            {categoriaDiferencia === 'alta' && (
-              <Alert type="error" icon="🔴" style={{ marginBottom: '1rem' }}>
-                <span style={{ fontSize: '.8rem' }}>Hay diferencia alta de caja ({fmt(Math.abs(diferencia))}). Investigar antes de confirmar.</span>
-              </Alert>
-            )}
-
             <div className="fo-card" style={{ background: 'var(--fo-surface)', border: 'none', textAlign: 'left', marginBottom: '1.25rem' }}>
               <SummaryRow label="Ingresos del día" value={fmt(ingresosOperativos)} />
-              <SummaryRow label="Costo de lo vendido (promedio)" value={fmt(costoVendido)} cls="s-neg" />
+              <SummaryRow label="Costo de lo vendido" value={fmt(costoVendido)} cls="s-neg" />
               <SummaryRow label="Gastos operativos" value={fmt(gastosJornada)} cls="s-neg" />
               <SummaryRow label="Costos fijos" value={fmt(costosFijosDia)} cls="s-neg" />
               <hr style={{ margin: '.5rem 0', borderColor: 'var(--fo-border)' }} />
