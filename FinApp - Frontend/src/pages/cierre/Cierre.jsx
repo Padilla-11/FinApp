@@ -7,6 +7,10 @@ import { productosApi } from '../../api/productos';
 import { costosFijosApi, empleadosApi } from '../../api/otros';
 import { Alert, SummaryRow, DayResult } from '../../components/ui/index';
 import { fmt, fmtPct, fmtFecha } from '../../utils/format';
+import {
+  CheckCircleIcon, XCircleIcon, ScaleIcon, ExclamationTriangleIcon,
+  BanknotesIcon, InformationCircleIcon, ClipboardDocumentListIcon,
+} from '@heroicons/react/20/solid';
 import toast from 'react-hot-toast';
 
 const STEPS = ['Conteo', 'Caja final', 'Validación', 'Resumen', 'Confirmar'];
@@ -128,18 +132,18 @@ export default function Cierre() {
 
   // Categorías de diferencia de caja
   const diferenciaPorcentaje = Math.abs(diferencia);
-  let categoriaDiferencia = 'cuadra'; // < $5,000
-  let alertIcon = '✅';
+  let categoriaDiferencia = 'cuadra';
+  let AlertIconComp = CheckCircleIcon;
   let alertColor = 'var(--fo-success-lt)';
   let alertBorder = '#a8dfc4';
   if (diferenciaPorcentaje >= 5000 && diferenciaPorcentaje < 30000) {
     categoriaDiferencia = 'revisar';
-    alertIcon = '⚠️';
+    AlertIconComp = ExclamationTriangleIcon;
     alertColor = 'var(--fo-warning-lt)';
     alertBorder = '#ffd89b';
   } else if (diferenciaPorcentaje >= 30000) {
     categoriaDiferencia = 'alta';
-    alertIcon = '🔴';
+    AlertIconComp = XCircleIcon;
     alertColor = 'var(--fo-danger-lt)';
     alertBorder = '#f5b8b8';
   }
@@ -273,7 +277,7 @@ export default function Cierre() {
       {paso === 2 && (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div className="fo-card" style={{ padding: '2.5rem 2rem', textAlign: 'center', maxWidth: 440, width: '100%' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💰</div>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><BanknotesIcon style={{ width: 40, height: 40 }} /></div>
             <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '.375rem' }}>¿Cuánto hay en caja ahora?</div>
             <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.75rem' }}>Cuenta el efectivo físico antes de cerrar</div>
             <div style={{ display: 'flex', alignItems: 'center', border: '2px solid var(--fo-border)', borderRadius: 12, maxWidth: 300, margin: '0 auto', overflow: 'hidden' }}>
@@ -341,7 +345,7 @@ export default function Cierre() {
             <div className="fo-card-header">
               <div className="fo-card-title">Reconciliación de caja</div>
               <span className={`badge ${categoriaDiferencia === 'cuadra' ? 'badge-success' : categoriaDiferencia === 'revisar' ? 'badge-warning' : 'badge-danger'}`}>
-                {categoriaDiferencia === 'cuadra' ? '✅ Cuadra' : categoriaDiferencia === 'revisar' ? '⚠️ Revisar' : '🔴 Alta diferencia'}
+                {categoriaDiferencia === 'cuadra' ? 'Cuadra' : categoriaDiferencia === 'revisar' ? 'Revisar' : 'Alta diferencia'}
               </span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '1rem' }}>
@@ -367,7 +371,7 @@ export default function Cierre() {
                   <div style={{ fontFamily: 'var(--fo-font-mono)', fontSize: '1.5rem', fontWeight: 500 }}>{fmt(parseFloat(cajaFinal || 0))}</div>
                 </div>
                 <div style={{ borderRadius: 12, padding: '1.125rem', textAlign: 'center', border: '1.5px solid', background: alertColor, borderColor: alertBorder }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: '.375rem' }}>{alertIcon}</div>
+                  <div style={{ marginBottom: '.375rem', display: 'flex', justifyContent: 'center' }}><AlertIconComp style={{ width: 24, height: 24 }} /></div>
                   <div style={{ fontSize: '.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fo-text-muted)', marginBottom: '.375rem' }}>Diferencia</div>
                   <div style={{ fontFamily: 'var(--fo-font-mono)', fontSize: '1.4rem', fontWeight: 500, color: diferencia >= 0 ? 'var(--fo-accent-dark)' : 'var(--fo-danger)' }}>{diferencia >= 0 ? '+' : ''}{fmt(diferencia)}</div>
                   <div style={{ fontSize: '.775rem', marginTop: '.375rem', color: 'var(--fo-text-secondary)' }}>
@@ -384,7 +388,7 @@ export default function Cierre() {
         // MOSTRAR MENSAJE INFORMATIVO CUANDO NO HAY CONTEO
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div className="fo-card" style={{ maxWidth: 500, width: '100%', textAlign: 'center' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>ℹ️</div>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><InformationCircleIcon style={{ width: 40, height: 40 }} /></div>
             <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '.5rem' }}>Cálculo de ingresos operativos</div>
             <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.5rem' }}>
               Como omitiste el conteo, los ingresos operativos se calculan automáticamente desde tu caja final:
@@ -433,7 +437,8 @@ export default function Cierre() {
               <div style={{ fontSize: '.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--fo-text-muted)', marginBottom: '.25rem' }}>Margen de ganancia</div>
               <div style={{ fontFamily: 'var(--fo-font-mono)', fontSize: '1.25rem', fontWeight: 600, color: utilidadNeta >= 0 ? 'var(--fo-accent-dark)' : 'var(--fo-danger)' }}>{fmtPct(margenGanancia)}</div>
             </div>
-            <DayResult estado={estadoDia} icon={estadoDia === 'rentable' ? '✅' : estadoDia === 'perdida' ? '❌' : '⚖️'}
+            <DayResult estado={estadoDia}
+              iconComponent={estadoDia === 'rentable' ? CheckCircleIcon : estadoDia === 'perdida' ? XCircleIcon : ScaleIcon}
               title={estadoDia === 'rentable' ? 'Día rentable' : estadoDia === 'perdida' ? 'Día con pérdida' : 'En equilibrio'}
               sub={`${estadoDia === 'rentable' ? 'Ganancia de ' : estadoDia === 'perdida' ? 'Pérdida de ' : 'Equilibrio: '}${fmt(Math.abs(utilidadNeta))}`} />
           </div>
@@ -472,14 +477,24 @@ export default function Cierre() {
       {paso === 5 && (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <div className="fo-card" style={{ padding: '2rem', textAlign: 'center', maxWidth: 520, width: '100%' }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><ClipboardDocumentListIcon style={{ width: 40, height: 40 }} /></div>
             <div style={{ fontSize: '1.05rem', fontWeight: 500, marginBottom: '.375rem' }}>¿Confirmar el cierre?</div>
             <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.75rem' }}>Una vez cerrada la jornada solo puede modificarse con justificación registrada en auditoría.</div>
             
             {/* Alertas si hay problemas */}
             {!conteoRealizado && (
-              <Alert type="info" icon="ℹ️" style={{ marginBottom: '1rem' }}>
+              <Alert type="info" style={{ marginBottom: '1rem' }}>
                 <span style={{ fontSize: '.8rem' }}>El conteo fue omitido. Los indicadores son <strong>estimados</strong> basados en tus movimientos registrados.</span>
+              </Alert>
+            )}
+            {categoriaDiferencia === 'revisar' && (
+              <Alert type="warning" style={{ marginBottom: '1rem' }}>
+                <span style={{ fontSize: '.8rem' }}>Hay diferencia moderada de caja. Revisa tus movimientos antes de confirmar.</span>
+              </Alert>
+            )}
+            {categoriaDiferencia === 'alta' && (
+              <Alert type="danger" style={{ marginBottom: '1rem' }}>
+                <span style={{ fontSize: '.8rem' }}>Hay diferencia alta de caja ({fmt(Math.abs(diferencia))}). Investigar antes de confirmar.</span>
               </Alert>
             )}
             {categoriaDiferencia === 'revisar' && (

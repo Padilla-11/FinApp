@@ -1,17 +1,21 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import {
+  ChartBarIcon, ClockIcon, CalendarDaysIcon, CreditCardIcon,
+  CalculatorIcon, SparklesIcon, Cog6ToothIcon,
+} from '@heroicons/react/20/solid';
 
 const NAV_ITEMS = [
   { section: 'Principal' },
-  { to: '/dashboard',   icon: '📊', label: 'Dashboard' },
-  { to: '/jornada',     icon: '⏱️', label: 'Jornada activa' },
-  { to: '/historial',   icon: '📅', label: 'Historial' },
+  { to: '/dashboard',     Icon: ChartBarIcon,     label: 'Dashboard' },
+  { to: '/jornada',       Icon: ClockIcon,         label: 'Jornada activa' },
+  { to: '/historial',     Icon: CalendarDaysIcon,  label: 'Historial' },
   { section: 'Finanzas' },
-  { to: '/cuentas',     icon: '💳', label: 'Cuentas por cobrar' },
-  { to: '/simulador',   icon: '🧮', label: 'Simulador' },
-  { to: '/analisis',    icon: '🤖', label: 'Análisis IA' },
+  { to: '/cuentas',       Icon: CreditCardIcon,    label: 'Cuentas por cobrar' },
+  { to: '/simulador',     Icon: CalculatorIcon,    label: 'Simulador' },
+  { to: '/analisis',      Icon: SparklesIcon,      label: 'Análisis IA' },
   { section: 'Ajustes' },
-  { to: '/configuracion', icon: '⚙️', label: 'Configuración' },
+  { to: '/configuracion', Icon: Cog6ToothIcon,     label: 'Configuración' },
 ];
 
 const OCULTOS_OPERADOR = ['/simulador', '/analisis', '/configuracion'];
@@ -66,7 +70,7 @@ export default function Sidebar() {
               to={item.to}
               className={({ isActive }) => `fo-nav-item${isActive ? ' active' : ''}`}
             >
-              <span style={{ fontSize: '1rem' }}>{item.icon}</span>
+              {item.Icon && <span style={{ width: 20, height: 20, display: 'inline-flex', alignItems: 'center' }}><item.Icon /></span>}
               {item.label}
             </NavLink>
           )

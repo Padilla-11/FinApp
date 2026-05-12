@@ -6,16 +6,18 @@ import { cuentasApi } from '../../api/otros';
 import { Modal } from '../../components/ui/Modal';
 import { Alert, EmptyState, EstadoBadge } from '../../components/ui/index';
 import { fmt, fmtHora, fmtFecha } from '../../utils/format';
+import { MOV_ICONS } from '../../utils/icons';
+import { ClockIcon, MapPinIcon } from '@heroicons/react/20/solid';
 import toast from 'react-hot-toast';
 
 // --- MODO PRUEBA: descomenta la siguiente línea para activar ---
 import { getProximoDiaPrueba } from '../../utils/diasPrueba';
 
 const TIPOS_MOV = {
-  gasto_operativo:       { label: 'Gasto operativo',       icon: '💸', cls: 'gasto',   signo: -1, title: 'Registrar gasto' },
-  compra_mercancia:      { label: 'Compra de mercancía',   icon: '📦', cls: 'compra',  signo: -1, title: 'Compra de mercancía' },
-  ingreso_no_operativo:  { label: 'Ingreso no operativo',  icon: '💵', cls: 'ingreso', signo:  1, title: 'Ingreso no operativo' },
-  retiro_dueno:          { label: 'Retiro del dueño',      icon: '🏦', cls: 'retiro',  signo: -1, title: 'Retiro del dueño' },
+  gasto_operativo:       { label: 'Gasto operativo',       Icon: MOV_ICONS.gasto_operativo.Icon, cls: 'gasto',   signo: -1, title: 'Registrar gasto' },
+  compra_mercancia:      { label: 'Compra de mercancía',   Icon: MOV_ICONS.compra_mercancia.Icon, cls: 'compra',  signo: -1, title: 'Compra de mercancía' },
+  ingreso_no_operativo:  { label: 'Ingreso no operativo',  Icon: MOV_ICONS.ingreso_no_operativo.Icon, cls: 'ingreso', signo:  1, title: 'Ingreso no operativo' },
+  retiro_dueno:          { label: 'Retiro del dueño',      Icon: MOV_ICONS.retiro_dueno.Icon, cls: 'retiro',  signo: -1, title: 'Retiro del dueño' },
 };
 
 export default function JornadaActiva() {
@@ -144,12 +146,12 @@ export default function JornadaActiva() {
           <h1 className="fo-page-title">Jornada activa</h1>
           <p className="fo-page-sub">{jornada ? `Abierta a las ${fmtHora(jornada.AbiertaEn || jornada.abiertaEn)}` : 'Sin jornada abierta'}</p>
         </div>
-        <span className="badge badge-warning" style={{ fontSize: '.75rem' }}>🟡 En curso</span>
+        <span className="badge badge-warning" style={{ fontSize: '.75rem', display: 'inline-flex', alignItems: 'center', gap: '.25rem' }}><ClockIcon style={{ width: 12, height: 12 }} /> En curso</span>
       </div>
 
       {!jornada && (
         <div className="fo-empty">
-          <div className="fo-empty-icon">⏱️</div>
+          <div className="fo-empty-icon"><ClockIcon /></div>
           <div className="fo-empty-text">No hay jornada activa</div>
           <button className="btn btn-accent" style={{ marginTop: '1rem' }} onClick={() => setModalApertura(true)}>Abrir nueva jornada</button>
         </div>
@@ -184,7 +186,7 @@ export default function JornadaActiva() {
                 style={{ background: 'var(--fo-white)', border: '1.5px solid var(--fo-border-light)', borderRadius: 12, padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '.5rem', cursor: 'pointer', transition: 'all .18s' }}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--fo-primary)'; e.currentTarget.style.boxShadow = 'var(--fo-shadow)'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--fo-border-light)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--fo-info-lt)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>{info.icon}</div>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--fo-info-lt)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{info.Icon && <info.Icon style={{ width: 20, height: 20 }} />}</div>
                 <div style={{ fontSize: '.875rem', fontWeight: 600 }}>{info.label}</div>
               </div>
             ))}
@@ -198,14 +200,14 @@ export default function JornadaActiva() {
                 <span className="badge badge-neutral">{movimientos.length} registros</span>
               </div>
               {movimientos.length === 0 ? (
-                <EmptyState icon="📋" text="Aún no hay movimientos. Usa los botones de arriba." />
+                <EmptyState icon="clipboard" text="Aún no hay movimientos. Usa los botones de arriba." />
               ) : (
                 movimientos.map((m, i) => {
-                  const tipo = TIPOS_MOV[m.Tipo || m.tipo] || { icon: '📌', cls: 'compra' };
+                  const tipo = TIPOS_MOV[m.Tipo || m.tipo] || { Icon: MapPinIcon, cls: 'compra' };
                   const esPos = (m.SignoCaja || 0) > 0;
                   return (
                     <div key={i} className="movement">
-                      <div className={`movement-icon ${tipo.cls}`}>{tipo.icon}</div>
+                      <div className={`movement-icon ${tipo.cls}`}>{tipo.Icon && <tipo.Icon />}</div>
                       <div className="movement-info">
                         <div className="movement-desc">{m.Descripcion || m.descripcion}</div>
                         <div className="movement-meta">{fmtHora(m.RegistradoEn || m.registradoEn)} · {tipo.label}</div>

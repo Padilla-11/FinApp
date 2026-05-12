@@ -342,7 +342,7 @@ export default function Configuracion() {
             <div className="fo-card-title">Productos y servicios</div>
             <button className="btn btn-primary btn-sm" onClick={() => setModalProd(true)}>+ Agregar</button>
           </div>
-          {productos.length === 0 ? <EmptyState icon="📦" text="No hay productos configurados" /> : (
+          {productos.length === 0 ? <EmptyState icon="box" text="No hay productos configurados" /> : (
             <div className="fo-table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
               <table className="fo-table">
                 <thead><tr><th>Producto</th><th>Precio venta</th><th>Costo unit.</th><th>Margen</th><th>Estado</th><th></th></tr></thead>
@@ -378,7 +378,7 @@ export default function Configuracion() {
             </div>
             <button className="btn btn-primary btn-sm" onClick={() => setModalCosto(true)}>+ Agregar</button>
           </div>
-          {costos.length === 0 ? <EmptyState icon="💰" text="No hay costos fijos configurados" /> : (
+          {costos.length === 0 ? <EmptyState icon="money" text="No hay costos fijos configurados" /> : (
             <div className="fo-table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
               <table className="fo-table">
                 <thead><tr><th>Nombre</th><th>Valor</th><th>Frecuencia</th><th>Equiv. diario</th><th></th></tr></thead>
@@ -413,7 +413,7 @@ export default function Configuracion() {
             </div>
             <button className="btn btn-primary btn-sm" onClick={() => setModalEmp(true)}>+ Agregar</button>
           </div>
-          {empleados.length === 0 ? <EmptyState icon="👥" text="No hay empleados registrados" /> : (
+          {empleados.length === 0 ? <EmptyState icon="users" text="No hay empleados registrados" /> : (
             <div className="fo-table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
               <table className="fo-table">
                 <thead><tr><th>Nombre</th><th>Cargo</th><th>Tipo pago</th><th>Valor</th><th>Costo/día</th><th></th></tr></thead>
@@ -449,7 +449,7 @@ export default function Configuracion() {
             </div>
             <button className="btn btn-primary btn-sm" onClick={() => setModalCat(true)}>+ Agregar</button>
           </div>
-          {categorias.length === 0 ? <EmptyState icon="🏷️" text="No hay categorías configuradas" /> : (
+          {categorias.length === 0 ? <EmptyState icon="tag" text="No hay categorías configuradas" /> : (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
               {categorias.map((c, i) => (
                 <span key={i} className="badge badge-info" style={{ fontSize: '.8rem', padding: '.375rem .75rem' }}>
@@ -471,7 +471,7 @@ export default function Configuracion() {
             <div className="fo-card-title">Usuarios con acceso</div>
             <button className="btn btn-primary btn-sm" onClick={() => setModalUser(true)}>+ Registrar usuario</button>
           </div>
-          {miembros.length === 0 ? <EmptyState icon="👥" text="No hay usuarios registrados en este negocio" /> : (
+          {miembros.length === 0 ? <EmptyState icon="users" text="No hay usuarios registrados en este negocio" /> : (
             <div className="fo-table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
               <table className="fo-table">
                 <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Registro</th><th></th></tr></thead>

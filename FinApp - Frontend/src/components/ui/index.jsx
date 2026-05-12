@@ -1,4 +1,19 @@
 import { estadoBadge } from '../../utils/format';
+import { EMPTY_ICONS } from '../../utils/icons';
+import {
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/20/solid';
+
+const ALERT_ICONS = {
+  warning: ExclamationTriangleIcon,
+  info: InformationCircleIcon,
+  danger: XCircleIcon,
+  error: XCircleIcon,
+  success: CheckCircleIcon,
+};
 
 export function Badge({ type = 'neutral', children }) {
   return <span className={`badge badge-${type}`}>{children}</span>;
@@ -9,10 +24,12 @@ export function EstadoBadge({ estado }) {
   return <span className={`badge ${b.cls}`}>{b.label}</span>;
 }
 
-export function Alert({ type = 'info', icon, title, children }) {
+export function Alert({ type = 'info', icon, iconComponent, title, children }) {
+  const IconComp = iconComponent || (type && ALERT_ICONS[type]);
   return (
     <div className={`alert ${type}`}>
-      {icon && <span className="alert-icon">{icon}</span>}
+      {IconComp && <span className="alert-icon"><IconComp /></span>}
+      {icon && !IconComp && <span className="alert-icon">{icon}</span>}
       <div className="alert-text">
         {title && <div className="alert-title">{title}</div>}
         {children}
@@ -31,10 +48,11 @@ export function KpiCard({ label, value, sub, type = '', style = {} }) {
   );
 }
 
-export function EmptyState({ icon = '📋', text }) {
+export function EmptyState({ icon = 'clipboard', iconComponent, text }) {
+  const IconComp = iconComponent || EMPTY_ICONS[icon] || EMPTY_ICONS.clipboard;
   return (
     <div className="fo-empty">
-      <div className="fo-empty-icon">{icon}</div>
+      <div className="fo-empty-icon"><IconComp /></div>
       <div className="fo-empty-text">{text}</div>
     </div>
   );
@@ -60,10 +78,14 @@ export function SummaryRow({ label, value, cls = '', style = {} }) {
   );
 }
 
-export function DayResult({ estado, icon, title, sub }) {
+export function DayResult({ estado, icon, iconComponent, title, sub }) {
+  const IconComp = iconComponent;
   return (
     <div className={`day-result ${estado}`}>
-      <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{icon}</span>
+      {IconComp
+        ? <span className="day-result-icon"><IconComp /></span>
+        : <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>{icon}</span>
+      }
       <div>
         <div style={{ fontSize: '.95rem', fontWeight: 600 }}>{title}</div>
         {sub && <div style={{ fontSize: '.825rem', color: 'var(--fo-text-secondary)', marginTop: '.125rem' }}>{sub}</div>}

@@ -160,7 +160,8 @@ input, select, textarea { font-family: var(--fo-font); }
   padding: .875rem 1rem; border-radius: var(--fo-radius);
   font-size: .875rem; border-left: 3px solid; margin-bottom: .625rem;
 }
-.alert-icon  { font-size: 1rem; flex-shrink: 0; margin-top: .05rem; }
+.alert-icon  { flex-shrink: 0; margin-top: .05rem; }
+.alert-icon svg { width: 20px; height: 20px; display: block; }
 .alert-text  { flex: 1; color: var(--fo-text); }
 .alert-title { font-weight: 600; font-size: .85rem; margin-bottom: .1rem; }
 .alert.danger  { background: var(--fo-danger-lt);  border-left-color: var(--fo-danger); }
@@ -297,7 +298,8 @@ input, select, textarea { font-family: var(--fo-font); }
 /* ── Movement feed ──────────────────────────────────────── */
 .movement { display: flex; align-items: center; gap: .875rem; padding: .75rem 0; border-bottom: 1px solid var(--fo-border-light); }
 .movement:last-child { border-bottom: none; }
-.movement-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.movement-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.movement-icon svg { width: 18px; height: 18px; display: block; }
 .movement-icon.gasto   { background: var(--fo-danger-lt); }
 .movement-icon.ingreso { background: var(--fo-success-lt); }
 .movement-icon.retiro  { background: var(--fo-warning-lt); }
@@ -328,6 +330,8 @@ input, select, textarea { font-family: var(--fo-font); }
 .day-result.rentable  { background: var(--fo-success-lt); border: 1.5px solid #a8dfc4; }
 .day-result.perdida   { background: var(--fo-danger-lt);  border: 1.5px solid #f5b8b8; }
 .day-result.equilibrio{ background: var(--fo-warning-lt); border: 1.5px solid #f5d89a; }
+.day-result-icon { width: 28px; height: 28px; flex-shrink: 0; }
+.day-result-icon svg { width: 100%; height: 100%; display: block; }
 
 /* ── Auth ───────────────────────────────────────────────── */
 .auth-wrap {
@@ -360,7 +364,8 @@ input, select, textarea { font-family: var(--fo-font); }
 
 /* ── Utilities ──────────────────────────────────────────── */
 .fo-empty { text-align: center; padding: 3rem 1rem; color: var(--fo-text-muted); }
-.fo-empty-icon { font-size: 2.5rem; margin-bottom: .75rem; opacity: .5; }
+.fo-empty-icon { margin-bottom: .75rem; opacity: .5; }
+.fo-empty-icon svg { width: 48px; height: 48px; display: block; margin: 0 auto; }
 .fo-empty-text { font-size: .875rem; }
 .text-success { color: var(--fo-accent-dark) !important; }
 .text-danger  { color: var(--fo-danger) !important; }

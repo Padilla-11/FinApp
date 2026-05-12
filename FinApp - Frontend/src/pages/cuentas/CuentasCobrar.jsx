@@ -129,7 +129,7 @@ export default function CuentasCobrar() {
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--fo-text-muted)' }}>Cargando cuentas...</div>
         ) : lista.length === 0 ? (
-          <EmptyState icon="💳" text="No hay cuentas que coincidan con el filtro" />
+          <EmptyState icon="card" text="No hay cuentas que coincidan con el filtro" />
         ) : (
           <div className="fo-table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
             <table className="fo-table">

@@ -75,7 +75,7 @@ export default function Historial() {
         {loading ? (
           <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--fo-text-muted)' }}>Cargando historial...</div>
         ) : lista.length === 0 ? (
-          <EmptyState icon="📅" text="No hay jornadas que coincidan con el filtro" />
+          <EmptyState icon="calendar" text="No hay jornadas que coincidan con el filtro" />
         ) : (
           <div className="fo-table-wrap" style={{ border: 'none', borderRadius: 0, boxShadow: 'none' }}>
             <table className="fo-table">

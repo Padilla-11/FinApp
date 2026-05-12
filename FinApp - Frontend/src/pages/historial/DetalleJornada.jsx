@@ -3,17 +3,26 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { cierresApi } from '../../api/cierres';
 import { jornadasApi } from '../../api/jornadas';
-import { SummaryRow, DayResult, EstadoBadge, EmptyState } from '../../components/ui/index';
+import { SummaryRow, DayResult, EstadoBadge, EmptyState, Alert } from '../../components/ui/index';
 import { Modal } from '../../components/ui/Modal';
 import { fmt, fmtPct, fmtFecha, fmtHora } from '../../utils/format';
+import { MOV_ICONS } from '../../utils/icons';
+import {
+  CheckCircleIcon, XCircleIcon, ScaleIcon, MapPinIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/20/solid';
 import toast from 'react-hot-toast';
 
-const TIPOS_ICON = {
-  gasto_operativo: { icon: '💸', cls: 'gasto' },
-  compra_mercancia: { icon: '📦', cls: 'compra' },
-  ingreso_no_operativo: { icon: '💵', cls: 'ingreso' },
-  retiro_dueno: { icon: '🏦', cls: 'retiro' },
-  cobro_cuenta_por_cobrar: { icon: '💰', cls: 'cobro' },
+const ICON_MAP = {
+  rentable: CheckCircleIcon,
+  perdida: XCircleIcon,
+  equilibrio: ScaleIcon,
+};
+
+const TITLE_MAP = {
+  rentable: 'Día rentable',
+  perdida: 'Día con pérdida',
+  equilibrio: 'En equilibrio',
 };
 
 export default function DetalleJornada() {
@@ -80,7 +89,7 @@ export default function DetalleJornada() {
   }
 
   if (loading) return <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--fo-text-muted)' }}>Cargando...</div>;
-  if (!cierre) return <div style={{ padding: '3rem', textAlign: 'center' }}><EmptyState icon="❌" text="No se encontró esta jornada" /></div>;
+  if (!cierre) return <div style={{ padding: '3rem', textAlign: 'center' }}><EmptyState icon="error" text="No se encontró esta jornada" /></div>;
 
   const estado    = cierre.EstadoDia    || cierre.estadoDia;
   const ingresos  = cierre.IngresosOperativos || 0;
@@ -94,9 +103,6 @@ export default function DetalleJornada() {
   const cajaEsp   = cierre.CajaEsperada || 0;
   const cajaReg   = cierre.CajaFinalRegistrada || 0;
   const diffCaja  = cierre.DiferenciaCaja || 0;
-
-  const iconMap = { rentable: '✅', perdida: '❌', equilibrio: '⚖️' };
-  const titleMap = { rentable: 'Día rentable', perdida: 'Día con pérdida', equilibrio: 'En equilibrio' };
 
   return (
     <>
@@ -126,7 +132,7 @@ export default function DetalleJornada() {
             <SummaryRow label="Gastos de la jornada" value={fmt(gastos)} cls="s-neg" />
             <SummaryRow label="Costos fijos del día" value={fmt(fijos)}  cls="s-neg" />
             <SummaryRow label="Utilidad neta"        value={fmt(utilNeta)} cls="s-total" />
-            <DayResult estado={estado} icon={iconMap[estado]} title={titleMap[estado]}
+            <DayResult estado={estado} iconComponent={ICON_MAP[estado] || CheckCircleIcon} title={TITLE_MAP[estado] || ''}
               sub={`Margen: ${fmtPct(margen)}`} />
           </div>
 
@@ -150,13 +156,13 @@ export default function DetalleJornada() {
 
           {tabActiva === 'mov' && (
             <>
-              {movimientos.length === 0 ? <EmptyState icon="📋" text="Sin movimientos registrados" /> :
+              {movimientos.length === 0 ? <EmptyState icon="clipboard" text="Sin movimientos registrados" /> :
                 movimientos.map((m, i) => {
-                  const info = TIPOS_ICON[m.Tipo || m.tipo] || { icon: '📌', cls: 'compra' };
+                  const info = MOV_ICONS[m.Tipo || m.tipo] || { Icon: MapPinIcon, cls: 'compra' };
                   const esPos = (m.SignoCaja || 0) > 0;
                   return (
                     <div key={i} className="movement">
-                      <div className={`movement-icon ${info.cls}`}>{info.icon}</div>
+                      <div className={`movement-icon ${info.cls}`}><info.Icon /></div>
                       <div className="movement-info">
                         <div className="movement-desc">{m.Descripcion || m.descripcion}</div>
                         <div className="movement-meta">{fmtHora(m.RegistradoEn || m.registradoEn)}</div>
@@ -172,7 +178,7 @@ export default function DetalleJornada() {
           {tabActiva === 'prod' && (
             <>
               {(!cierre.Conteos || cierre.Conteos?.length === 0) ? (
-                <EmptyState icon="📦" text="No se realizó conteo de productos en esta jornada" />
+                <EmptyState icon="docs" text="No se realizó conteo de productos en esta jornada" />
               ) : (
                 <div className="fo-table-wrap" style={{ border: 'none', boxShadow: 'none' }}>
                   <table className="fo-table">
@@ -195,7 +201,7 @@ export default function DetalleJornada() {
           )}
 
           {tabActiva === 'audit' && (
-            <EmptyState icon="🔒" text="Sin correcciones registradas. Esta jornada no ha sido modificada." />
+            <EmptyState icon="lock" text="Sin correcciones registradas. Esta jornada no ha sido modificada." />
           )}
         </div>
       </div>
@@ -203,10 +209,9 @@ export default function DetalleJornada() {
       {/* Modal corrección */}
       <Modal open={modalCorr} onClose={() => setModalCorr(false)} title="Solicitar corrección"
         footer={<><button className="btn btn-ghost" onClick={() => setModalCorr(false)}>Cancelar</button><button className="btn btn-primary" onClick={solicitarCorreccion} disabled={saving}>{saving ? 'Guardando...' : 'Continuar'}</button></>}>
-        <div className="alert warning" style={{ marginBottom: '1rem' }}>
-          <span className="alert-icon">⚠️</span>
-          <div className="alert-text" style={{ fontSize: '.8rem' }}>Cualquier cambio quedará registrado en el log de auditoría con tu usuario y la justificación.</div>
-        </div>
+        <Alert type="warning" iconComponent={ExclamationTriangleIcon}>
+          <span style={{ fontSize: '.8rem' }}>Cualquier cambio quedará registrado en el log de auditoría con tu usuario y la justificación.</span>
+        </Alert>
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="label-text">Justificación <span className="required">*</span></label>
           <textarea className="fo-input" style={{ resize: 'vertical', minHeight: 80 }} placeholder="Explica por qué necesitas corregir esta jornada..."

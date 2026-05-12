@@ -4,8 +4,9 @@ import { useApp } from '../../context/AppContext';
 import { cierresApi } from '../../api/cierres';
 import { jornadasApi } from '../../api/jornadas';
 import { cuentasApi } from '../../api/otros';
-import { KpiCard, Alert, EstadoBadge } from '../../components/ui/index';
+import { KpiCard, Alert, EstadoBadge, EmptyState } from '../../components/ui/index';
 import { fmt, fmtPct, fmtFechaCorta, fmtHora } from '../../utils/format';
+import { ChartBarIcon, CheckCircleIcon, CalendarDaysIcon } from '@heroicons/react/20/solid';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 export default function Dashboard() {
@@ -71,10 +72,10 @@ export default function Dashboard() {
   }));
 
   const alertas = [];
-  if (jornada) alertas.push({ type: 'warning', icon: '🟡', title: 'Jornada abierta', text: `Tienes una jornada abierta desde las ${fmtHora(jornada.AbiertaEn || jornada.abiertaEn)}` });
-  if (totalCobrar > 0) alertas.push({ type: 'info', icon: 'ℹ️', title: 'Cuentas por cobrar', text: `Tienes ${fmt(totalCobrar)} pendientes de cobro.`, link: '/cuentas' });
+  if (jornada) alertas.push({ type: 'warning', title: 'Jornada abierta', text: `Tienes una jornada abierta desde las ${fmtHora(jornada.AbiertaEn || jornada.abiertaEn)}` });
+  if (totalCobrar > 0) alertas.push({ type: 'info', title: 'Cuentas por cobrar', text: `Tienes ${fmt(totalCobrar)} pendientes de cobro.`, link: '/cuentas' });
   const racha = mesActual.slice(-3);
-  if (!esOperador && racha.length >= 2 && racha.every((c) => (c.EstadoDia || c.estadoDia) === 'perdida')) alertas.push({ type: 'danger', icon: '🔴', title: 'Racha negativa', text: 'Llevas varios días consecutivos sin superar el punto de equilibrio.' });
+  if (!esOperador && racha.length >= 2 && racha.every((c) => (c.EstadoDia || c.estadoDia) === 'perdida')) alertas.push({ type: 'danger', title: 'Racha negativa', text: 'Llevas varios días consecutivos sin superar el punto de equilibrio.' });
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
@@ -151,7 +152,7 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="fo-empty"><div className="fo-empty-icon">📊</div><div className="fo-empty-text">Aún no hay datos para mostrar</div></div>
+            <EmptyState icon="chart" text="Aún no hay datos para mostrar" />
           )}
         </div>
 
@@ -161,7 +162,7 @@ export default function Dashboard() {
             {alertas.length > 0 && <span className="badge badge-danger">{alertas.length}</span>}
           </div>
           {alertas.length === 0 ? (
-            <div className="fo-empty"><div className="fo-empty-icon">✅</div><div className="fo-empty-text">Sin alertas activas</div></div>
+            <EmptyState icon="check" text="Sin alertas activas" />
           ) : (
             alertas.map((a, i) => (
               <Alert key={i} type={a.type} icon={a.icon} title={a.title}>
@@ -179,7 +180,7 @@ export default function Dashboard() {
           <button className="btn btn-ghost btn-sm" onClick={() => navigate('/historial')}>Ver todo →</button>
         </div>
         {historial.length === 0 ? (
-          <div className="fo-empty"><div className="fo-empty-icon">📅</div><div className="fo-empty-text">Aún no hay jornadas cerradas</div></div>
+          <EmptyState icon="calendar" text="Aún no hay jornadas cerradas" />
         ) : (
           <div className="fo-table-wrap" style={{ border: 'none', boxShadow: 'none' }}>
             <table className="fo-table">

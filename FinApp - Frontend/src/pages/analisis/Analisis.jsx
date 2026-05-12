@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { iaApi } from '../../api/ia';
+import { SparklesIcon, LightBulbIcon, BookOpenIcon } from '@heroicons/react/20/solid';
 
 const SUGERENCIAS = [
   '¿Qué días me conviene más operar?',
@@ -190,12 +191,12 @@ export default function Analisis() {
                         <p className="pm-detalle">{field(p, 'detalle', 'Detalle')}</p>
                         {field(p, 'consejoEspecifico', 'ConsejoEspecifico') && (
                           <div className="pm-consejo">
-                            💡 <strong>Consejo:</strong> {field(p, 'consejoEspecifico', 'ConsejoEspecifico')}
+                            <LightBulbIcon style={{ width: 16, height: 16, verticalAlign: 'text-bottom' }} /> <strong>Consejo:</strong> {field(p, 'consejoEspecifico', 'ConsejoEspecifico')}
                           </div>
                         )}
                         {field(p, 'contextoConceptual', 'ContextoConceptual') && (
                           <div className="pm-contexto">
-                            📖 <strong>Concepto:</strong> {field(p, 'contextoConceptual', 'ContextoConceptual')}
+                            <BookOpenIcon style={{ width: 16, height: 16, verticalAlign: 'text-bottom' }} /> <strong>Concepto:</strong> {field(p, 'contextoConceptual', 'ContextoConceptual')}
                           </div>
                         )}
                       </div>
@@ -218,7 +219,7 @@ export default function Analisis() {
         <div className="fo-card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div className="fo-card-header">
             <div>Pregúntale a FinOp IA</div>
-            <div style={{ width: 32, height: 32, background: 'var(--fo-info-lt)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.9rem' }}>🤖</div>
+            <div style={{ width: 32, height: 32, background: 'var(--fo-info-lt)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><SparklesIcon style={{ width: 16, height: 16 }} /></div>
           </div>
 
           <div ref={chatRef} className="chat-wrap" style={{ flex: 1, overflowY: 'auto', padding: '.25rem 0' }}>
