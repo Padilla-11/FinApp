@@ -29,6 +29,7 @@ export default function Login() {
 
   return (
     <div className="auth-wrap">
+      <Link to="/" style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', fontSize: '.85rem', color: 'var(--fo-text-muted)', textDecoration: 'none' }}>← Inicio</Link>
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-icon">

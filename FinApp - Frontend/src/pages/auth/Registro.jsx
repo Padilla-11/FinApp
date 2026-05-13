@@ -44,6 +44,7 @@ export default function Registro() {
 
   return (
     <div className="auth-wrap">
+      <Link to="/" style={{ position: 'absolute', top: '1.5rem', left: '1.5rem', fontSize: '.85rem', color: 'var(--fo-text-muted)', textDecoration: 'none' }}>← Inicio</Link>
       <div className="auth-card" style={{ maxWidth: 480 }}>
         <div className="auth-logo">
           <div className="auth-logo-icon">

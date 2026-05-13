@@ -31,6 +31,14 @@ export function AppProvider({ children }) {
     localStorage.setItem('finop_user', JSON.stringify(Data.Usuario));
     setToken(Data.Token);
     setUser(Data.Usuario);
+
+    // Cargar el negocio asociado al usuario desde la base de datos
+    if (Data.NegocioId) {
+      const negRes = await negociosApi.obtener(Data.NegocioId);
+      const negocioData = negRes.data.Data;
+      seleccionarNegocio(negocioData);
+    }
+
     return Data;
   }
 

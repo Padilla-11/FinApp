@@ -5,6 +5,7 @@ import { AppProvider } from './context/AppContext';
 import AppLayout       from './components/layout/AppLayout';
 import ProtectedRoute  from './components/layout/ProtectedRoute';
 
+import LandingPage     from './pages/landing/LandingPage';
 import Login           from './pages/auth/Login';
 import Registro        from './pages/auth/Registro';
 import Onboarding      from './pages/auth/Onboarding';
@@ -37,6 +38,7 @@ export default function App() {
         />
         <Routes>
           {/* Rutas públicas */}
+          <Route path="/"            element={<LandingPage />} />
           <Route path="/login"      element={<Login />} />
           <Route path="/registro"   element={<Registro />} />
           <Route path="/onboarding" element={<Onboarding />} />
@@ -57,8 +59,7 @@ export default function App() {
           </Route>
 
           {/* Redirect raíz */}
-          <Route path="/"  element={<Navigate to="/dashboard" replace />} />
-          <Route path="*"  element={<Navigate to="/dashboard" replace />} />
+          <Route path="*"  element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AppProvider>

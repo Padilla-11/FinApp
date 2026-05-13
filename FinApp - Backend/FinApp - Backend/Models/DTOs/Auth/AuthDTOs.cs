@@ -40,6 +40,7 @@ public class AuthResponse
     public string Nombre { get; set; } = null!;
     public string Correo { get; set; } = null!;
     public long UsuarioId { get; set; }
+    public long NegocioId { get; set; }
     public DateTimeOffset Expira { get; set; }
     public UsuarioDto Usuario { get; set; } = null!;
 }

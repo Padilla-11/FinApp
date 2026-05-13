@@ -51,12 +51,20 @@ public class AuthService : IAuthService
     private AuthResponse BuildResponse(Models.Entities.Usuario u)
     {
         var expMin = int.Parse(_config["Jwt:ExpirationMinutes"]!);
+
+        // Obtener el negocio asociado al usuario (único)
+        var negocioId = _db.UsuariosNegocios
+            .Where(un => un.UsuarioId == u.Id && un.EliminadoEn == null)
+            .Select(un => un.NegocioId)
+            .FirstOrDefault();
+
         return new AuthResponse
         {
             Token = _jwt.GenerarToken(u.Id, u.Correo, u.Nombre),
             Nombre = u.Nombre,
             Correo = u.Correo,
             UsuarioId = u.Id,
+            NegocioId = negocioId,
             Expira = DateTimeOffset.UtcNow.AddMinutes(expMin),
             Usuario = new Models.DTOs.Auth.UsuarioDto
             {

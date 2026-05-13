@@ -21,7 +21,7 @@ const NAV_ITEMS = [
 const OCULTOS_OPERADOR = ['/simulador', '/analisis', '/configuracion'];
 
 export default function Sidebar() {
-  const { user, negocio, rol, logout } = useApp();
+  const { user, negocio, negocios, rol, logout, seleccionarNegocio } = useApp();
   const navigate = useNavigate();
 
   const initials = (name = '') => {
@@ -81,7 +81,28 @@ export default function Sidebar() {
         {negocio && (
           <div style={{ marginBottom: '.75rem', padding: '.5rem .625rem', background: 'rgba(255,255,255,.08)', borderRadius: 8 }}>
             <div style={{ fontSize: '.65rem', color: 'rgba(255,255,255,.4)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '.2rem' }}>Negocio activo</div>
-            <div className="fo-user-biz" style={{ fontWeight: 500 }}>{negocio.Nombre || negocio.nombre}</div>
+            {negocios.length > 1 ? (
+              <select
+                value={negocio.Id || negocio.id}
+                onChange={(e) => {
+                  const selected = negocios.find(n => (n.Id || n.id) === parseInt(e.target.value));
+                  if (selected) seleccionarNegocio(selected);
+                }}
+                style={{
+                  width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,.15)',
+                  color: '#fff', borderRadius: 6, padding: '.35rem .4rem', fontSize: '.8125rem',
+                  fontFamily: 'inherit', cursor: 'pointer', outline: 'none',
+                }}
+              >
+                {negocios.map((n) => (
+                  <option key={n.Id || n.id} value={n.Id || n.id} style={{ background: '#1e293b', color: '#fff' }}>
+                    {n.Nombre || n.nombre}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="fo-user-biz" style={{ fontWeight: 500 }}>{negocio.Nombre || negocio.nombre}</div>
+            )}
           </div>
         )}
         <div className="fo-user-chip">

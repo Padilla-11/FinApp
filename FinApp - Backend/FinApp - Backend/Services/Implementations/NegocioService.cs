@@ -30,7 +30,7 @@ public class NegocioService : INegocioService
                 Rol           = un.Rol,
                 CreadoEn      = un.Negocio.CreadoEn
             })
-            .OrderByDescending(n => n.CreadoEn)
+            .OrderBy(n => n.CreadoEn)
             .ToListAsync();
     }
 
