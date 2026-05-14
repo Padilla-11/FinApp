@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "landing-page-guide-v2": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "computedHash": "ad40e284776758c8655f7ce4dcd0ead20607a9de5cae2d37ca19dceae2c1bace"
+    }
+  }
+}
