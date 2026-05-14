@@ -15,10 +15,11 @@ public static class CostoHelper
 {
     public static decimal CalcularCostoDiario(decimal valor, string frecuencia, short[]? diasOperacion)
     {
-        if (frecuencia == "diaria") return valor;
-        if (frecuencia == "semanal") return valor / 7;
-
         var diasSemana = diasOperacion?.Length ?? 6;
+
+        if (frecuencia == "diaria") return valor;
+        if (frecuencia == "semanal") return valor / diasSemana;
+
         var diasMes = Math.Round(diasSemana * 4.33m);
         return valor / diasMes;
     }

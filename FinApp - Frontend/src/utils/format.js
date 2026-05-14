@@ -36,7 +36,7 @@ export const diasMensuales = (diasSemana) => Math.round((diasSemana || 6) * 4.33
 // Equivalente diario de un costo
 export const equivDiario = (valor, frecuencia, diasOperativos = 6) => {
   if (frecuencia === 'diaria') return valor;
-  if (frecuencia === 'semanal') return valor / 7;
+  if (frecuencia === 'semanal') return valor / diasOperativos;
   const diasMes = Math.round(diasOperativos * 4.33);
   return valor / diasMes;
 };

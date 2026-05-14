@@ -46,7 +46,7 @@ export default function Configuracion() {
   // Forms
   const [prodForm, setProdForm]   = useState({ nombre: '', precio: '', costo: '' });
   const [costoForm, setCostoForm] = useState({ nombre: '', valor: '', frecuencia: 'mensual' });
-  const [empForm, setEmpForm]     = useState({ nombre: '', cargo: '', tipoPago: 'mensual', valorPago: '' });
+  const [empForm, setEmpForm]     = useState({ nombre: '', cargo: '', tipoPago: 'diaria', valorPago: '' });
   const [catForm, setCatForm]     = useState({ nombre: '' });
   const [userForm, setUserForm]   = useState({ nombre: '', correo: '', password: '', confirmar: '', rol: 'operador' });
   const [saving, setSaving]       = useState(false);
@@ -529,7 +529,7 @@ export default function Configuracion() {
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div style={{ flex: 1 }}><label className="label-text">Tipo de pago</label>
             <select className="fo-input fo-select" value={empForm.tipoPago} onChange={(e) => setEmpForm((p) => ({ ...p, tipoPago: e.target.value }))}>
-              <option value="mensual">Mensual</option><option value="semanal">Semanal</option><option value="diario">Diario</option>
+              <option value="mensual">Mensual</option><option value="semanal">Semanal</option><option value="diaria">Diario</option>
             </select>
           </div>
           <div style={{ flex: 1 }}><label className="label-text">Valor <span className="required">*</span></label><input className="fo-input" type="number" placeholder="0" value={empForm.valorPago} onChange={(e) => setEmpForm((p) => ({ ...p, valorPago: e.target.value }))} /></div>

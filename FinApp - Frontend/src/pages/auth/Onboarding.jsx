@@ -106,11 +106,11 @@ export default function Onboarding() {
     }
   }
 
-  const equivDiario = (v, f) => {
+  const equivDiario = (v, f, diasOperativos = 6) => {
     const n = parseFloat(v) || 0;
     if (f === 'diaria') return n;
-    if (f === 'semanal') return n / 7;
-    return n / 30;
+    if (f === 'semanal') return n / diasOperativos;
+    return n / Math.round(diasOperativos * 4.33);
   };
 
   const pills = [1,2,3].map((n) => (
@@ -188,7 +188,7 @@ export default function Onboarding() {
               <div style={{ fontSize: '.875rem', color: 'var(--fo-text-muted)', marginBottom: '1.5rem' }}>Arriendos, servicios, nómina. Calculamos el equivalente diario automáticamente.</div>
               {costos.map((c, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '.75rem', background: 'var(--fo-surface)', borderRadius: 8, marginBottom: '.5rem' }}>
-                  <div><strong>{c.nombre}</strong> <span style={{ fontSize: '.8rem', color: 'var(--fo-text-muted)' }}>— ${c.valor} / {c.frecuencia} · Equiv/día: ${equivDiario(c.valor, c.frecuencia).toFixed(0)}</span></div>
+                  <div><strong>{c.nombre}</strong> <span style={{ fontSize: '.8rem', color: 'var(--fo-text-muted)' }}>— ${c.valor} / {c.frecuencia} · Equiv/día: ${equivDiario(c.valor, c.frecuencia, negForm.dias.length).toFixed(0)}</span></div>
                   <button onClick={() => setCostos((prev) => prev.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', color: 'var(--fo-danger)', cursor: 'pointer' }}>✕</button>
                 </div>
               ))}
@@ -231,7 +231,7 @@ export default function Onboarding() {
             </select>
           </div>
         </div>
-        {costoForm.valor && <div className="fo-hint">Equiv. diario: <strong>${equivDiario(costoForm.valor, costoForm.frecuencia).toFixed(0)}</strong></div>}
+        {costoForm.valor && <div className="fo-hint">Equiv. diario: <strong>${equivDiario(costoForm.valor, costoForm.frecuencia, negForm.dias.length).toFixed(0)}</strong></div>}
       </Modal>
     </div>
   );
