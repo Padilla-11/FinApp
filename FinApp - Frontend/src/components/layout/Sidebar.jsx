@@ -2,20 +2,21 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import {
   ChartBarIcon, ClockIcon, CalendarDaysIcon, CreditCardIcon,
-  CalculatorIcon, SparklesIcon, Cog6ToothIcon,
+  CalculatorIcon, SparklesIcon, PresentationChartBarIcon, Cog6ToothIcon,
 } from '@heroicons/react/20/solid';
 
 const NAV_ITEMS = [
   { section: 'Principal' },
-  { to: '/dashboard',     Icon: ChartBarIcon,     label: 'Dashboard' },
-  { to: '/jornada',       Icon: ClockIcon,         label: 'Jornada activa' },
-  { to: '/historial',     Icon: CalendarDaysIcon,  label: 'Historial' },
+  { to: '/dashboard',     Icon: ChartBarIcon,             label: 'Dashboard' },
+  { to: '/jornada',       Icon: ClockIcon,                 label: 'Jornada activa' },
+  { to: '/historial',     Icon: CalendarDaysIcon,          label: 'Historial' },
   { section: 'Finanzas' },
-  { to: '/cuentas',       Icon: CreditCardIcon,    label: 'Cuentas por cobrar' },
-  { to: '/simulador',     Icon: CalculatorIcon,    label: 'Simulador' },
-  { to: '/analisis',      Icon: SparklesIcon,      label: 'Análisis IA' },
+  { to: '/cuentas',       Icon: CreditCardIcon,            label: 'Cuentas por cobrar' },
+  { to: '/simulador',     Icon: CalculatorIcon,            label: 'Simulador' },
+  { to: '/analisis',      Icon: SparklesIcon,              label: 'Análisis IA' },
+  { to: '/estadisticas',  Icon: PresentationChartBarIcon,  label: 'Estadísticas' },
   { section: 'Ajustes' },
-  { to: '/configuracion', Icon: Cog6ToothIcon,     label: 'Configuración' },
+  { to: '/configuracion', Icon: Cog6ToothIcon,             label: 'Configuración' },
 ];
 
 const OCULTOS_OPERADOR = ['/simulador', '/analisis', '/configuracion'];

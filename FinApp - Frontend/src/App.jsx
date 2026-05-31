@@ -18,6 +18,7 @@ import CuentasCobrar   from './pages/cuentas/CuentasCobrar';
 import Configuracion   from './pages/configuracion/Configuracion';
 import Simulador       from './pages/simulador/Simulador';
 import Analisis        from './pages/analisis/Analisis';
+import Estadisticas    from './pages/estadisticas/Estadisticas';
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="/configuracion"     element={<Configuracion />} />
               <Route path="/simulador"         element={<Simulador />} />
               <Route path="/analisis"          element={<Analisis />} />
+              <Route path="/estadisticas"      element={<Estadisticas />} />
             </Route>
           </Route>
 

@@ -15,3 +15,12 @@
 # IDE
 *.userprefs
 .idea/
+
+# Ignorar logs de la aplicación
+**/backend.log
+
+# Ignorar archivos del sistema/errores de comandos en Windows
+**/nul
+
+# Descomenta la siguiente línea si el .sql tiene datos sensibles
+# DB_FINAPP.sql

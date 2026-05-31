@@ -25,6 +25,7 @@ public class FinopDbContext : DbContext
     public DbSet<AuditoriaCierre> AuditoriasCierres => Set<AuditoriaCierre>();
     public DbSet<EscenarioSimulacion> EscenariosSimulacion => Set<EscenarioSimulacion>();
     public DbSet<VariableSimulacion> VariablesSimulacion => Set<VariableSimulacion>();
+    public DbSet<CacheAnalisis> CacheAnalisis => Set<CacheAnalisis>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -400,6 +401,26 @@ public class FinopDbContext : DbContext
             e.HasOne(x => x.Negocio).WithMany().HasForeignKey(x => x.NegocioId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.Producto).WithMany().HasForeignKey(x => x.ProductoId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(x => x.CostoFijo).WithMany().HasForeignKey(x => x.CostoFijoId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CacheAnalisis>(e =>
+        {
+            e.ToTable("cache_analisis");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id").UseIdentityByDefaultColumn();
+            e.Property(x => x.NegocioId).HasColumnName("negocio_id");
+            e.Property(x => x.Dias).HasColumnName("dias");
+            e.Property(x => x.PeriodoInicio).HasColumnName("periodo_inicio");
+            e.Property(x => x.PeriodoFin).HasColumnName("periodo_fin");
+            e.Property(x => x.JornadasBase).HasColumnName("jornadas_base");
+            e.Property(x => x.IdempotencyKey).HasColumnName("idempotency_key").HasMaxLength(64).IsRequired();
+            e.Property(x => x.PayloadEnviado).HasColumnName("payload_enviado").HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.Resultado).HasColumnName("resultado").HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.GeneradoEn).HasColumnName("generado_en");
+
+            e.HasOne(x => x.Negocio).WithMany().HasForeignKey(x => x.NegocioId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.NegocioId, x.Dias, x.IdempotencyKey }).IsUnique();
+            e.HasIndex(x => new { x.NegocioId, x.Dias, x.GeneradoEn }).HasDatabaseName("idx_cache_analisis_negocio");
         });
     }
 }

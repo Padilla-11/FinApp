@@ -2,6 +2,7 @@ using System.Text;
 using Finop.API.Data;
 using Finop.API.Helpers;
 using Finop.API.Middleware;
+using Finop.API.Services;
 using Finop.API.Services.Implementations;
 using Finop.API.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -88,12 +89,17 @@ builder.Services.AddScoped<ISimuladorService, SimuladorService>();
 // IA
 builder.Services.AddScoped<IIAService, IAService>();
 
+// Análisis estadístico
+builder.Services.AddScoped<EstadisticasCalculator>();
+builder.Services.AddScoped<AnalisisService>();
+builder.Services.AddScoped<AnalisisIAService>();
+
 builder.Services.AddHttpClient("OpenCodeGo", client =>
 {
     client.DefaultRequestHeaders.Authorization =
         new System.Net.Http.Headers.AuthenticationHeaderValue(
             "Bearer", builder.Configuration["IA:ApiKey"]);
-    client.Timeout = TimeSpan.FromSeconds(90);
+    client.Timeout = TimeSpan.FromSeconds(300);
 });
 
 // ─────────────────────────────────────────────────────────────
