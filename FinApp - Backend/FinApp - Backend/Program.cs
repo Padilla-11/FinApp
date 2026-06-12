@@ -111,7 +111,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:3000",   // React dev
                 "http://localhost:5173",   // Vite dev
-                "https://fin-op.vercel.app/"        // Producción
+                "https://fin-op.vercel.app"        // Producción
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
