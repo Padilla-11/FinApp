@@ -40,7 +40,7 @@ export default function Historial() {
   const totalIngresos = lista.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
   const totalUtilidad = lista.reduce((s, c) => s + (c.UtilidadNeta || 0), 0);
   const diasRentables = lista.filter((c) => (c.EstadoDia || c.estadoDia) === 'rentable').length;
-  const margenProm    = lista.length ? lista.reduce((s, c) => s + (c.MargenGanancia || 0), 0) / lista.length : 0;
+  const margenProm    = totalIngresos > 0 ? (totalUtilidad / totalIngresos) * 100 : 0;
 
   return (
     <>

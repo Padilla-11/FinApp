@@ -215,9 +215,12 @@ public class SimuladorService : ISimuladorService
         if (cierres.Count == 0)
             return new PromedioBase(0, 0, 0, 0, 0.3m, 0, 0);
 
-        var ingrProm = cierres.Average(c => (double)c.IngresosOperativos);
-        var utilProm = cierres.Average(c => (double)c.UtilidadNeta);
-        var margenProm = cierres.Average(c => (double)c.MargenGanancia);
+        var totalIngresos = cierres.Sum(c => c.IngresosOperativos);
+        var totalUtilidad = cierres.Sum(c => c.UtilidadNeta);
+        var dias = cierres.Count;
+        var ingrProm = dias > 0 ? (double)(totalIngresos / dias) : 0;
+        var utilProm = dias > 0 ? (double)(totalUtilidad / dias) : 0;
+        var margenProm = totalIngresos > 0 ? (double)(totalUtilidad / totalIngresos * 100) : 0;
         var equilProm = cierres.Average(c => (double)c.PuntoEquilibrioDia);
         var costoVendPct = cierres.Average(c =>
             c.IngresosOperativos > 0 ? (double)(c.CostoVendido / c.IngresosOperativos) : 0.3);

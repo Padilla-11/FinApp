@@ -310,7 +310,7 @@ REGLAS: 2-3 elementos por lista. Datos reales. $280.000, 18.4%. Lenguaje de dueÃ
             jornadas = cierres.Count,
             ingresos_totales = totalIngresos,
             utilidad_neta = cierres.Sum(c => c.UtilidadNeta),
-            margen_promedio_pct = Math.Round(cierres.Average(c => c.MargenGanancia), 1),
+            margen_promedio_pct = Math.Round(totalIngresos > 0 ? cierres.Sum(c => c.UtilidadNeta) / totalIngresos * 100 : 0, 1),
             dias_rentables = cierres.Count(c => c.EstadoDia == "rentable"),
             dias_perdida = cierres.Count(c => c.EstadoDia == "perdida"),
             promedio_diario = Math.Round(totalIngresos / cierres.Count, 0),
@@ -378,7 +378,7 @@ REGLAS: 2-3 elementos por lista. Datos reales. $280.000, 18.4%. Lenguaje de dueÃ
                 jornadas = g.Count(),
                 ingresos_totales = g.Sum(c => c.IngresosOperativos),
                 utilidad_total = g.Sum(c => c.UtilidadNeta),
-                margen_promedio = Math.Round(g.Average(c => c.MargenGanancia), 1),
+                margen_promedio = Math.Round(g.Sum(c => c.IngresosOperativos) > 0 ? g.Sum(c => c.UtilidadNeta) / g.Sum(c => c.IngresosOperativos) * 100 : 0, 1),
                 prom_diario = Math.Round(g.Average(c => c.IngresosOperativos), 0),
                 rentables = g.Count(c => c.EstadoDia == "rentable")
             })

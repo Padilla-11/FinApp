@@ -52,7 +52,7 @@ export default function Dashboard() {
 
   const totalIngresos  = mesActual.reduce((s, c) => s + (c.IngresosOperativos || 0), 0);
   const totalUtilidad  = mesActual.reduce((s, c) => s + (c.UtilidadNeta || 0), 0);
-  const margenProm     = mesActual.length ? mesActual.reduce((s, c) => s + (c.MargenGanancia || 0), 0) / mesActual.length : 0;
+  const margenProm     = totalIngresos > 0 ? (totalUtilidad / totalIngresos) * 100 : 0;
   const diasRentables  = mesActual.filter((c) => (c.EstadoDia || c.estadoDia) === 'rentable').length;
 
   // ── OPERADOR ────────────────────────────────────────────────

@@ -308,16 +308,17 @@ public class EstadisticasCalculator
                 Nombre = g.First().Producto?.Nombre ?? "?",
                 Unidades = g.Sum(c => c.UnidadesVendidas),
                 Utilidad = g.Sum(c => c.SubtotalUtilidad),
-                Margen = g.Average(c => c.PrecioVenta > 0 ? (c.PrecioVenta - c.CostoUnitario) / c.PrecioVenta * 100 : 0),
+                Margen = g.Sum(c => c.SubtotalIngresos) > 0 ? g.Sum(c => c.SubtotalUtilidad) / g.Sum(c => c.SubtotalIngresos) * 100 : 0,
                 Ingresos = g.Sum(c => c.SubtotalIngresos),
             })
             .ToList();
 
         var totalIngresos = porProducto.Sum(p => p.Ingresos);
+        var totalUtilidad = porProducto.Sum(p => p.Utilidad);
         var masVendido = porProducto.OrderByDescending(p => p.Unidades).FirstOrDefault();
         var masRentable = porProducto.OrderByDescending(p => p.Utilidad).FirstOrDefault();
         var peorMargen = porProducto.OrderBy(p => p.Margen).FirstOrDefault();
-        var margenPromedio = porProducto.Any() ? porProducto.Average(p => p.Margen) : 0;
+        var margenPromedio = totalIngresos > 0 ? totalUtilidad / totalIngresos * 100 : 0;
 
         var jornadasSinConteo = cierres.Count(c => !c.ConteoRealizado);
 
@@ -446,7 +447,7 @@ public class EstadisticasCalculator
                 Nombre = g.First().Producto?.Nombre ?? "?",
                 Unidades = g.Sum(c => c.UnidadesVendidas),
                 Utilidad = g.Sum(c => c.SubtotalUtilidad),
-                Margen = g.Average(c => c.PrecioVenta > 0 ? (double)((c.PrecioVenta - c.CostoUnitario) / c.PrecioVenta * 100) : 0),
+                Margen = g.Sum(c => c.SubtotalIngresos) > 0 ? (double)(g.Sum(c => c.SubtotalUtilidad) / g.Sum(c => c.SubtotalIngresos) * 100) : 0,
                 Ingresos = g.Sum(c => c.SubtotalIngresos),
             })
             .OrderByDescending(p => p.Ingresos)

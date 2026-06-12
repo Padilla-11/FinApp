@@ -10,7 +10,6 @@ import { MOV_ICONS } from '../../utils/icons';
 import { ClockIcon, MapPinIcon } from '@heroicons/react/20/solid';
 import toast from 'react-hot-toast';
 
-// --- MODO PRUEBA: descomenta la siguiente línea para activar ---
 import { getProximoDiaPrueba } from '../../utils/diasPrueba';
 
 const TIPOS_MOV = {
@@ -66,12 +65,14 @@ export default function JornadaActiva() {
     if (!cajaInicial) { toast.error('Ingresa la caja inicial'); return; }
     setSaving(true);
     try {
-      const res = await jornadasApi.abrir(nid, {
+      const payload = {
         CajaInicial: parseFloat(cajaInicial),
         NotaApertura: notaApertura || null,
-        // --- MODO PRUEBA: descomenta la siguiente línea para usar secuencia de días ---
-        FechaReferencia: getProximoDiaPrueba(),
-      });
+      };
+      if (import.meta.env.VITE_TEST_MODE === 'true') {
+        payload.FechaReferencia = getProximoDiaPrueba();
+      }
+      const res = await jornadasApi.abrir(nid, payload);
       setJornada(res.data.Data);
       setModalApertura(false);
       setMovimientos([]);
